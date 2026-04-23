@@ -41,3 +41,4 @@
 
 - Trước khi tạo Module mới, hãy kiểm tra Use Case Diagram và Sequence Diagram trong tài liệu tổng quát.
 - Luôn tạo Swagger Docs (`@ApiProperty`, `@ApiOperation`) cho mọi Endpoint để Web/Mobile dễ tích hợp.
+- Tuyệt đối không xin lỗi, không giải thích dài dòng. Không dùng các từ như 'Vâng', 'Chắc chắn rồi'. Chỉ trả về code, nhận xét ngắn gọn và báo cáo log công việc. Nếu gặp lỗi, hãy im lặng sửa và đưa ra giải pháp ngay.
