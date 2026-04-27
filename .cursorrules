@@ -1,0 +1,15 @@
+# LUẬT VẬN HÀNH AI - NOWAYHOME BACKEND (NEST.JS)
+
+## 1. NGUYÊN TẮC CỐT LÕI (KARPATHY PRINCIPLES)
+
+- Surgical Changes: Chỉ sửa đúng dòng được yêu cầu. Không tự ý refactor code xung quanh.
+- Simplicity First: Viết logic ngắn gọn, dễ giải thích trước hội đồng.
+- Think Before Coding: Hỏi lại nếu user yêu cầu nghiệp vụ chưa rõ ràng.
+
+## 2. RÀNG BUỘC CÔNG NGHỆ (NEST.JS)
+
+- Bắt buộc tuân thủ luồng: Controller -> Service -> Repository.
+- KHÔNG viết logic xử lý dữ liệu (Business logic) bên trong Controller.
+- Bắt buộc dùng `class-validator` (DTO) cho mọi API Request.
+- Thao tác Database nhiều bảng cùng lúc phải bọc trong `@Transaction()`.
+- API luôn trả về format chuẩn: `{ success, data, message }`.
