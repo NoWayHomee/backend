@@ -8,8 +8,9 @@ Hệ thống được thiết kế theo mô hình **Client-Server** với kiến
 
 - **Mobile App (Customer):** React Native + Expo.
 - **Web App (Partner/Admin):** React.js + Vite.
-- **Backend (Core):** Node.js + Express.js.
-- **Database:** MySQL.
+- **Backend (Core):** Nest.js.
+- **Database:** PostgreSQL (Docker + Tableplus).
+- **Security:** JWT
 
 ## 2. Mô hình phân tầng (Layered Architecture)
 

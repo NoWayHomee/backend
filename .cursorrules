@@ -1,15 +1,33 @@
-# LUẬT VẬN HÀNH AI - NOWAYHOME BACKEND (NEST.JS)
+# LUẬT VẬN HÀNH AI - NOWAYHOME BACKEND (NEST.JS + POSTGRESQL)
 
-## 1. NGUYÊN TẮC CỐT LÕI (KARPATHY PRINCIPLES)
+## 1. NGUYÊN TẮC CỐT LÕI (CORE PRINCIPLES)
 
-- Surgical Changes: Chỉ sửa đúng dòng được yêu cầu. Không tự ý refactor code xung quanh.
-- Simplicity First: Viết logic ngắn gọn, dễ giải thích trước hội đồng.
-- Think Before Coding: Hỏi lại nếu user yêu cầu nghiệp vụ chưa rõ ràng.
+- **Surgical Changes:** Chỉ sửa đúng dòng được yêu cầu. Không tự ý tái cấu trúc (refactor) các tệp tin hoặc thư mục xung quanh.
+- **Explainability:** Logic phải tường minh. Mọi đoạn code sinh ra phải đủ đơn giản để sinh viên có thể giải thích trước Hội đồng bảo vệ (CLO1).
+- **Constraint Compliance:** Trước khi viết code, phải đọc kỹ file `3.8` (SQL) để đảm bảo không vi phạm các ràng buộc Khóa ngoại (FK) và Check Constraints.
 
-## 2. RÀNG BUỘC CÔNG NGHỆ (NEST.JS)
+## 2. RÀNG BUỘC CÔNG NGHỆ & KIẾN TRÚC (NEST.JS)
 
-- Bắt buộc tuân thủ luồng: Controller -> Service -> Repository.
-- KHÔNG viết logic xử lý dữ liệu (Business logic) bên trong Controller.
-- Bắt buộc dùng `class-validator` (DTO) cho mọi API Request.
-- Thao tác Database nhiều bảng cùng lúc phải bọc trong `@Transaction()`.
-- API luôn trả về format chuẩn: `{ success, data, message }`.
+- **Flow Enforcement:** Tuân thủ tuyệt đối luồng: `Controller -> Service -> Entity/Repository`.
+- **No Business Logic in Controller:** Controller chỉ làm nhiệm vụ điều hướng và gọi DTO Validation. Logic nghiệp vụ nằm hoàn toàn ở Service.
+- **DTO Mandatory:** Mọi API Request bắt buộc phải có DTO sử dụng `class-validator`. Thiếu bước này sẽ bị coi là lỗi bảo mật nghiêm trọng.
+- **Database Rules:**
+  - Sử dụng PostgreSQL thông qua TypeORM.
+  - Tuyệt đối không dùng `synchronize: true`.
+  - Các thao tác ghi dữ liệu đa bảng (VD: Booking + Payment) bắt buộc sử dụng Transaction.
+- **Standard Response:** Mọi API trả về định dạng:
+
+```json
+{
+  "success": boolean,
+  "data": any,
+  "message": string
+}
+```
+
+## 3. CHỈ THỊ THỰC THI (EXECUTION COMMANDS)
+
+- **Documentation:** Luôn tạo Swagger Docs (`@ApiProperty`, `@ApiOperation`) cho mọi Endpoint mới.
+- **Auth Guard:** Mọi API truy cập dữ liệu cá nhân phải được bảo vệ bởi `JwtAuthGuard`.
+- **No Premature Abstraction:** Không tự ý đẻ ra các lớp `BaseService` hay `BaseRepository` nếu không có yêu cầu từ người dùng.
+- **Log Activity:** Sau mỗi nhiệm vụ, hãy báo cáo tóm tắt các tệp đã sửa và nhắc nhở người dùng cập nhật Nhật ký đồ án (Project Log) để minh chứng cho CLO2.
