@@ -8,8 +8,8 @@
 # BACKEND TECH STACK (STRICT)
 
 - **Framework:** NestJS (Node.js).
-- **Database:** PostgreSQL.
-- **ORM:** Prisma (Ưu tiên số 1 để type-safety). Nếu dự án bắt buộc dùng TypeORM, hãy hỏi lại user trước khi generate code.
+- **Database:** PostgreSQL Docker + DBeaver
+- **ORM:** Prisma
 - **Security:** JWT (Access/Refresh Token), Argon2 (hashing), RBAC (Role-Based Access Control).
 
 # HOW TO RUN & DEV COMMANDS

@@ -17,7 +17,8 @@ Tuyệt đối KHÔNG đề xuất hoặc sử dụng các công nghệ ngoài d
 - **Web Frontend (Admin & Partner):** ReactJS, TypeScript, Vite, TailwindCSS. State management: Zustand hoặc RTK Query (tùy ngữ cảnh).
 - **Mobile App (Customer):** React Native, Expo, Expo Router (file-based routing), TypeScript.
 - **Backend:** NestJS (Node.js framework). Sử dụng RESTful API làm mặc định, chỉ dùng GraphQL khi client có nhu cầu query data phức tạp có tính liên kết cao.
-- **Database:** PostgreSQL chạy qua Docker. Prisma ORM
+- **Database:** PostgreSQL Docker + DBeaver.
+- **ORM:** Prisma.
 - **Security:** JWT (Access/Refresh Token mechanism), RBAC (Role-Based Access Control - Customer, Host, Admin), bcrypt/argon2 hashing.
 
 # INTEGRATION CONTRACT - NOWAYHOME
