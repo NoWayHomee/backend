@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================= ENUMS =================
+enum UserType {
+  customer
+  partner
+  staff
+}
+
+enum UserStatus {
+  active
+  suspended
+  pending
+  deleted
+}
+
+enum PropertyType {
+  hotel
+  homestay
+  resort
+  apartment
+  villa
+  hostel
+}
+
+enum PropertyStatus {
+  draft
+  pending_review
+  active
+  suspended
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  checked_in
+  checked_out
+  cancelled
+  no_show
+}
+
+enum PaymentStatus {
+  unpaid
+  partial
+  paid
+  refunded
+}
+
+// ================= MODELS =================
+
+model User {
+  id                BigInt     @id @default(autoincrement())
+  uuid              String     @unique @db.Char(36)
+  email             String     @unique @db.VarChar(255)
+  phone             String?    @unique @db.VarChar(20)
+  passwordHash      String?    @map("password_hash") @db.VarChar(255)
+  fullName          String     @map("full_name") @db.VarChar(255)
+  avatarUrl         String?    @map("avatar_url") @db.VarChar(500)
+  userType          UserType   @map("user_type")
+  status            UserStatus @default(pending)
+  emailVerifiedAt   DateTime?  @map("email_verified_at")
+  lastLoginAt       DateTime?  @map("last_login_at")
+  preferredLanguage String     @default("vi") @map("preferred_language") @db.Char(5)
+  
+  // Relations (Simplified for MVP)
+  properties        Property[] @relation("PartnerProperties")
+  bookings          Booking[]  @relation("CustomerBookings")
+
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  @@index([userType, status])
+  @@index([status])
+  @@map("users")
+}
+
+model Property {
+  id              BigInt         @id @default(autoincrement())
+  partnerId       BigInt         @map("partner_id")
+  slug            String         @unique @db.VarChar(300)
+  name            String         @db.VarChar(500)
+  propertyType    PropertyType   @map("property_type")
+  description     String?        @db.Text
+  address         String         @db.Text
+  city            String         @db.VarChar(100)
+  district        String?        @db.VarChar(100)
+  countryCode     String         @default("VN") @map("country_code") @db.Char(2)
+  latitude        Decimal        @db.Decimal(10, 8)
+  longitude       Decimal        @db.Decimal(11, 8)
+  starRating      Int?           @map("star_rating") @db.SmallInt
+  avgRating       Decimal        @default(0.00) @map("avg_rating") @db.Decimal(3, 2)
+  totalReviews    Int            @default(0) @map("total_reviews")
+  checkInTime     DateTime       @map("check_in_time") @db.Time() // Note: Prisma maps TIME to DateTime
+  checkOutTime    DateTime       @map("check_out_time") @db.Time()
+  status          PropertyStatus @default(draft)
+  
+  // Relations
+  partner         User           @relation("PartnerProperties", fields: [partnerId], references: [id])
+  roomTypes       RoomType[]
+  bookings        Booking[]
+
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([partnerId])
+  @@index([city, status])
+  @@map("properties")
+}
+
+model RoomType {
+  id               BigInt   @id @default(autoincrement())
+  propertyId       BigInt   @map("property_id")
+  name             String   @db.VarChar(255)
+  description      String?  @db.Text
+  areaSqm          Decimal? @map("area_sqm") @db.Decimal(6, 2)
+  bedConfiguration String?  @map("bed_configuration") @db.VarChar(200)
+  maxOccupancy     Int      @default(2) @map("max_occupancy") @db.SmallInt
+  viewType         String?  @map("view_type") @db.VarChar(100)
+  totalRooms       Int      @default(1) @map("total_rooms") @db.SmallInt
+  basePrice        Decimal  @map("base_price") @db.Decimal(12, 2)
+  isActive         Boolean  @default(true) @map("is_active")
+
+  // Relations
+  property         Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("room_types")
+}
+
+model Booking {
+  id                  BigInt        @id @default(autoincrement())
+  bookingCode         String        @unique @map("booking_code") @db.VarChar(30)
+  customerId          BigInt        @map("customer_id")
+  propertyId          BigInt        @map("property_id")
+  checkInDate         DateTime      @map("check_in_date") @db.Date
+  checkOutDate        DateTime      @map("check_out_date") @db.Date
+  numNights           Int           @map("num_nights") @db.SmallInt
+  numAdults           Int           @default(1) @map("num_adults") @db.SmallInt
+  numChildren         Int           @default(0) @map("num_children") @db.SmallInt
+  subtotalAmount      Decimal       @map("subtotal_amount") @db.Decimal(12, 2)
+  discountAmount      Decimal       @default(0.00) @map("discount_amount") @db.Decimal(12, 2)
+  taxAmount           Decimal       @default(0.00) @map("tax_amount") @db.Decimal(12, 2)
+  totalAmount         Decimal       @map("total_amount") @db.Decimal(12, 2)
+  platformFeeAmount   Decimal       @default(0.00) @map("platform_fee_amount") @db.Decimal(12, 2)
+  partnerPayoutAmount Decimal       @default(0.00) @map("partner_payout_amount") @db.Decimal(12, 2)
+  currency            String        @default("VND") @db.Char(3)
+  status              BookingStatus @default(pending)
+  paymentStatus       PaymentStatus @default(unpaid) @map("payment_status")
+  specialRequests     String?       @map("special_requests") @db.Text
+  
+  // Relations
+  customer            User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  property            Property      @relation(fields: [propertyId], references: [id])
+
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  @@index([customerId])
+  @@index([propertyId])
+  @@map("bookings")
+}

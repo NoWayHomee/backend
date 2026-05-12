@@ -1,26 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePropertyDto } from './dto/create-property.dto';
-import { UpdatePropertyDto } from './dto/update-property.dto';
+
+export interface MockProperty {
+  id: string;
+  name: string;
+  address: string;
+  basePrice: number;
+  image: string;
+}
 
 @Injectable()
 export class PropertiesService {
-  create(createPropertyDto: CreatePropertyDto) {
-    return 'This action adds a new property';
-  }
-
-  findAll() {
-    return `This action returns all properties`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} property`;
-  }
-
-  update(id: number, updatePropertyDto: UpdatePropertyDto) {
-    return `This action updates a #${id} property`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} property`;
+  findAll(): MockProperty[] {
+    return [
+      {
+        id: '1',
+        name: 'NoWayHome Central Hotel',
+        address: '12 Nguyen Hue, District 1, Ho Chi Minh City',
+        basePrice: 1200000,
+        image: 'https://example.com/images/nowayhome-central.jpg',
+      },
+      {
+        id: '2',
+        name: 'Saigon Riverside Homestay',
+        address: '88 Ton That Thuyet, District 4, Ho Chi Minh City',
+        basePrice: 750000,
+        image: 'https://example.com/images/saigon-riverside.jpg',
+      },
+    ];
   }
 }
