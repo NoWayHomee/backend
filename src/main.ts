@@ -5,19 +5,12 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
-
-declare global {
-  interface BigInt {
-    toJSON(): string;
-  }
-}
-
-BigInt.prototype.toJSON = function toJSON(): string {
-  return this.toString();
-};
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({

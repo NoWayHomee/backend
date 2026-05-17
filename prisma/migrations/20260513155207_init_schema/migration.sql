@@ -83,7 +83,7 @@ CREATE TYPE "source_channel_enum" AS ENUM ('web', 'mobile', 'ota', 'direct');
 CREATE TYPE "user_status_enum" AS ENUM ('active', 'suspended', 'pending', 'deleted');
 
 -- CreateEnum
-CREATE TYPE "user_type_enum" AS ENUM ('customer', 'partner', 'staff');
+CREATE TYPE "user_type_enum" AS ENUM ('customer', 'partner', 'admin');
 
 -- CreateTable
 CREATE TABLE "users" (
