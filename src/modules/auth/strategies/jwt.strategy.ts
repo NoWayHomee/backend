@@ -1,31 +1,32 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { user_type_enum } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { UsersService } from '../../users/users.service';
+import { JwtPayload } from '../auth.service';
 
-export interface JwtPayload {
-  sub: string;
+export interface AuthenticatedUser {
+  id: string;
   email: string;
+  userType: user_type_enum;
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly usersService: UsersService) {
+  constructor(configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET ?? 'dev_jwt_secret',
+      secretOrKey: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const user = await this.usersService.findById(BigInt(payload.sub));
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid access token');
-    }
-
-    return user;
+  validate(payload: JwtPayload): AuthenticatedUser {
+    return {
+      id: payload.sub,
+      email: payload.email,
+      userType: payload.userType,
+    };
   }
 }

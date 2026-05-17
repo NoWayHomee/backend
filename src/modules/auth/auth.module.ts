@@ -1,37 +1,33 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { SignOptions } from 'jsonwebtoken';
 
-import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 import { UsersModule } from '../users/users.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
-const jwtExpiresIn = (process.env.JWT_EXPIRES_IN ??
-  '15m') as SignOptions['expiresIn'];
-
 @Module({
   imports: [
+    PrismaModule,
     UsersModule,
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'dev_jwt_secret',
-      signOptions: {
-        expiresIn: jwtExpiresIn,
-      },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        signOptions: {
+          expiresIn: configService.getOrThrow<string>(
+            'JWT_ACCESS_EXPIRES_IN',
+          ) as JwtSignOptions['expiresIn'],
+        },
+      }),
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-  ],
+  providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}
