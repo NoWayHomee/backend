@@ -801,7 +801,7 @@ model AuditLog {
 interface AuthenticatedUser {
   id: string;          // user ID (string vì BigInt serialization)
   email: string;
-  user_type: user_type_enum;  // 'customer' | 'partner' | 'admin'
+  userType: user_type_enum;  // 'customer' | 'partner' | 'admin'
 }
 ```
 
@@ -811,17 +811,19 @@ interface AuthenticatedUser {
 |--------|------|-------|-------|
 | POST | `/auth/register` | Public | Tạo tài khoản mới |
 | POST | `/auth/login` | Public | Đăng nhập, trả về access + refresh token |
-| POST | `/auth/refresh` | Refresh JWT | Lấy access token mới |
-| POST | `/auth/logout` | JWT | Huỷ session (revoke refresh token) |
+| POST | `/auth/refresh` | Public (body DTO) | Rotate refresh token, lấy access token mới |
+| POST | `/auth/logout` | JWT (`@UseGuards(JwtAuthGuard)`) | Huỷ tất cả active session của user |
 
 #### RegisterDto
 ```typescript
 {
   email: string;
-  password: string;     // min 8 ký tự
-  full_name?: string;
-  phone?: string;
-  user_type?: 'customer' | 'partner';  // default: customer
+  password: string;        // min 8 ký tự
+  fullName: string;        // required, max 255
+  phone: string;           // required, max 20
+  userType: user_type_enum;           // 'customer' | 'partner'
+  businessName?: string;   // optional, chỉ khi userType=partner
+  businessType?: business_type_enum;  // optional, chỉ khi userType=partner
 }
 ```
 
@@ -829,7 +831,16 @@ interface AuthenticatedUser {
 ```typescript
 {
   email: string;
-  password: string;
+  password: string;        // min 8 ký tự
+  deviceName?: string;     // optional, max 255
+  deviceType?: device_type_enum;  // optional, default: web
+}
+```
+
+#### RefreshTokenDto
+```typescript
+{
+  refreshToken: string;    // JWT refresh token từ login/refresh trước
 }
 ```
 
@@ -839,10 +850,9 @@ interface AuthenticatedUser {
   accessToken: string;
   refreshToken: string;
   user: {
-    id: string;
+    id: bigint;
     email: string;
-    full_name: string | null;
-    user_type: string;
+    userType: user_type_enum;
   }
 }
 ```
@@ -853,9 +863,7 @@ interface AuthenticatedUser {
 
 ### 9.1 `/users` — UsersController
 
-| Method | Path | Auth | Mô tả |
-|--------|------|------|-------|
-| GET | `/users/me` | JWT | Lấy thông tin user hiện tại |
+> Controller tồn tại nhưng **không có endpoint nào**. Placeholder.
 
 ---
 
@@ -873,12 +881,17 @@ interface AuthenticatedUser {
 | Method | Path | Auth | Mô tả |
 |--------|------|------|-------|
 | POST | `/bookings` | JWT (customer) | Tạo booking mới |
+| GET | `/bookings/me` | JWT (customer) | Danh sách booking của customer hiện tại |
+| POST | `/bookings/:id/cancel` | JWT (customer) | Huỷ booking, restore availability |
+| POST | `/bookings/:id/reviews` | JWT (customer) | Tạo review cho booking đã checkout |
 
 ---
 
-### 9.4 `/reviews` — ReviewsController ← NEW MODULE
+### 9.4 `/reviews` — ReviewsController
 
-> Module `reviews/` mới. Xử lý tạo và đọc review cho property. Review yêu cầu booking đã completed. Moderation bởi admin.
+| Method | Path | Auth | Mô tả |
+|--------|------|------|-------|
+| POST | `/reviews/:bookingId` | JWT (customer) | Submit review sau khi checkout |
 
 ---
 
@@ -894,11 +907,8 @@ interface AuthenticatedUser {
 
 | Method | Path | Mô tả |
 |--------|------|-------|
-| GET | `/admin/partners/pending` | Danh sách partner chờ duyệt KYC |
-| PATCH | `/admin/partners/:id/kyc` | Duyệt/từ chối KYC của partner |
-| GET | `/admin/properties/pending` | Danh sách property đang chờ duyệt |
-| PATCH | `/admin/properties/:id/status` | Duyệt/từ chối/suspend property |
-| GET | `/admin/analytics/revenue` | Thống kê doanh thu |
+| PATCH | `/admin/partners/:partnerProfileId/kyc` | Duyệt/từ chối KYC của partner |
+| PATCH | `/admin/properties/:propertyId/status` | Duyệt/từ chối/suspend property |
 
 ---
 
