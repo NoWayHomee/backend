@@ -12,7 +12,7 @@
 - **License**: UNLICENSED (private)
 - **Entry point**: `src/main.ts`
 - **Default port**: `3000`
-- **API docs**: `http://localhost:3000/api-docs` (Swagger UI — title: "Agoda Clone API")
+- **API docs**: `http://localhost:3000/api-docs` (Swagger UI — title: "NoWayHome API")
 
 ### Three user roles
 | Role | Mô tả |
@@ -1046,10 +1046,18 @@ Tất cả fields của model `property_policies` (xem Section 7 — PropertyPol
 
 ### BookingsService
 
-- `create`: tạo booking với roomTypeId + ratePlanId, trừ `availableQty` trong `daily_rates`
+- `create`: tạo booking với roomTypeId + ratePlanId, trừ `availableQty` trong `daily_rates`. Dùng `FOR UPDATE` lock tránh race condition. Booking code: `NWH-{timestamp_base36}-{random_base36}`.
 - `findMine`: lấy danh sách booking của customer hiện tại
-- `cancel`: huỷ booking, restore `availableQty`, set `cancellationReason`
-- `createReview`: tạo review cho booking đã `checked_out`
+- `cancel`: huỷ booking, tính penalty (`free`/`non_refundable`/`partial`), restore `availableQty` qua `booking_rooms`, set `cancellationReason`
+- `createReview(user, bookingId, dto: BookingCreateReviewDto)`: raw SQL INSERT vào `reviews` + gọi `updatePropertyReviewStats` trong cùng transaction
+- `updatePropertyReviewStats(tx, propertyId)` _(private)_: `AVG(overall_rating)` + `COUNT(*)` raw SQL → cập nhật `property.avgRating` / `property.totalReviews`
+- `BookingCreateReviewDto`: `overall_rating` (number), `content` (string, optional)
+
+### ReviewsService (module `reviews`)
+
+- `createReview(user, bookingId, dto: CustomerCreateReviewDto)`: kiểm tra ownership + `checked_out` + không duplicate → transaction tạo review + cập nhật property stats theo running average
+- `CustomerCreateReviewDto`: `rating` (number → Decimal), `comment` (string, optional)
+- **Hai entry point tạo review**: `POST /bookings/:id/reviews` (BookingsService) và `POST /reviews/:bookingId` (ReviewsService). Cả hai yêu cầu booking `checked_out`.
 
 ---
 
@@ -1111,7 +1119,8 @@ enum Role {
 
 ```typescript
 import 'dotenv/config';
-// Swagger title: 'Agoda Clone API'
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 
 const app = await NestFactory.create(AppModule);
 
@@ -1125,13 +1134,23 @@ app.useGlobalPipes(new ValidationPipe({
   transform: true,
 }));
 
-// Swagger
+// Swagger title: 'NoWayHome API'
 const swaggerConfig = new DocumentBuilder()
-  .setTitle('Agoda Clone API')
+  .setTitle('NoWayHome API')
   .setVersion('1.0')
   .addBearerAuth()
   .build();
-SwaggerModule.setup('api-docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+
+// Ghi swagger-spec.json ra disk khi NODE_ENV !== 'production'
+if (process.env.NODE_ENV !== 'production') {
+  writeFileSync(
+    join(process.cwd(), 'swagger-spec.json'),
+    JSON.stringify(swaggerDocument, null, 2),
+  );
+}
+
+SwaggerModule.setup('api-docs', app, swaggerDocument);
 
 // Không có app.enableCors() hay app.setGlobalPrefix()
 await app.listen(process.env.PORT ?? 3000);
@@ -1227,10 +1246,13 @@ export class AppModule {}
 11. **Review moderation**: Review mới tạo có `moderationStatus: pending`, cần admin approve trước khi hiển thị.
 12. **UserSession**: Refresh token được lưu dưới dạng bcrypt hash trong `user_sessions`. Hỗ trợ multi-device. Logout revoke session theo sessionId hoặc tất cả.
 13. **Media upload**: Upload ảnh thực hiện trực tiếp từ client lên Cloudinary bằng presigned signature. Backend không lưu binary.
-14. **Payments module**: `src/modules/payments/` có `PaymentsController` với `POST /payments/checkout/:bookingId` và `POST /payments/webhook` nhưng chưa được mount vào AppModule.
+14. **Payments module**: `src/modules/payments/` có `PaymentsController` — `POST /payments/checkout/:bookingId` (JWT protected) và `POST /payments/webhook` (`@Public`). `WebhookDto`: `bookingCode: string` + `transactionStatus: 'SUCCESS' | 'FAILED'` (validated `@IsString`/`@IsEnum`). Module **chưa mount vào AppModule**.
 15. **ScheduleModule**: `BookingsCron` (`src/modules/bookings/bookings.cron.ts`) — scheduled task tự động xử lý bookings (ví dụ: auto no-show, auto checkout).
 16. **No CORS**: `app.enableCors()` không được gọi trong main.ts hiện tại.
 17. **No global prefix**: Không dùng `app.setGlobalPrefix()`.
+18. **swagger-spec.json**: Auto-generate và ghi ra disk (`writeFileSync`) khi `NODE_ENV !== 'production'`. Swagger title: `'NoWayHome API'`.
+19. **Review DTO naming**: `BookingCreateReviewDto` (BookingsService, field `overall_rating`); `CustomerCreateReviewDto` (ReviewsService, field `rating`). Hai DTO khác nhau cho cùng chức năng.
+20. **Booking code format**: `NWH-{timestamp_base36}-{random_base36}` — hàm `generateBookingCode()`.
 
 ---
 
