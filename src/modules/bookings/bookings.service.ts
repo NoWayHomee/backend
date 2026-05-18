@@ -13,7 +13,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { CreateReviewDto } from './dto/create-review.dto';
+import { BookingCreateReviewDto } from './dto/create-review.dto';
 
 const TAX_RATE = new Prisma.Decimal(0.1);
 const BOOKING_CODE_PREFIX = 'NWH';
@@ -78,7 +78,10 @@ export class BookingsService {
    *  4. Decrement availableQty by 1 for every locked row.
    *  5. Persist the Booking record.
    */
-  async createBooking(dto: CreateBookingDto, user: AuthenticatedUser): Promise<Booking> {
+  async createBooking(
+    dto: CreateBookingDto,
+    user: AuthenticatedUser,
+  ): Promise<Booking> {
     const customerId = BigInt(user.id);
     const propertyId = BigInt(dto.propertyId);
     const roomTypeId = BigInt(dto.roomTypeId);
@@ -152,7 +155,10 @@ export class BookingsService {
     });
   }
 
-  async create(user: AuthenticatedUser, dto: CreateBookingDto): Promise<Booking> {
+  async create(
+    user: AuthenticatedUser,
+    dto: CreateBookingDto,
+  ): Promise<Booking> {
     const customerId = BigInt(user.id);
     const propertyId = BigInt(dto.propertyId);
     const roomTypeId = BigInt(dto.roomTypeId);
@@ -182,7 +188,9 @@ export class BookingsService {
 
       const ratePlan = roomType.ratePlans[0];
       if (!ratePlan) {
-        throw new BadRequestException('Room type does not have an active rate plan');
+        throw new BadRequestException(
+          'Room type does not have an active rate plan',
+        );
       }
 
       const assignableRooms = await tx.room.findMany({
@@ -197,7 +205,9 @@ export class BookingsService {
       });
 
       if (assignableRooms.length < dto.roomsNeeded) {
-        throw new BadRequestException('Not enough physical rooms are configured');
+        throw new BadRequestException(
+          'Not enough physical rooms are configured',
+        );
       }
 
       const lockedRates = await this.lockDailyRates(
@@ -255,7 +265,9 @@ export class BookingsService {
         },
       });
 
-      const averageRoomPrice = subtotalAmount.div(dto.roomsNeeded).div(numNights);
+      const averageRoomPrice = subtotalAmount
+        .div(dto.roomsNeeded)
+        .div(numNights);
       await this.createBookingRooms(
         tx,
         booking.id,
@@ -359,7 +371,7 @@ export class BookingsService {
   async createReview(
     user: AuthenticatedUser,
     bookingIdParam: string,
-    dto: CreateReviewDto,
+    dto: BookingCreateReviewDto,
   ): Promise<ReviewResult> {
     const bookingId = this.parseBigIntParam(bookingIdParam, 'id');
     const customerId = BigInt(user.id);
@@ -382,7 +394,9 @@ export class BookingsService {
       }
 
       if (booking.status !== booking_status_enum.checked_out) {
-        throw new BadRequestException('Only checked-out bookings can be reviewed');
+        throw new BadRequestException(
+          'Only checked-out bookings can be reviewed',
+        );
       }
 
       const existingReview = await tx.$queryRaw<ReviewIdRow[]>`
@@ -457,7 +471,9 @@ export class BookingsService {
     roomsNeeded: number,
   ): void {
     if (lockedRates.length !== numNights) {
-      throw new BadRequestException('Daily rates are missing for one or more nights');
+      throw new BadRequestException(
+        'Daily rates are missing for one or more nights',
+      );
     }
 
     const unavailableRate = lockedRates.find(
@@ -465,7 +481,9 @@ export class BookingsService {
     );
 
     if (unavailableRate) {
-      throw new BadRequestException('Not enough availability for selected dates');
+      throw new BadRequestException(
+        'Not enough availability for selected dates',
+      );
     }
   }
 
@@ -522,7 +540,7 @@ export class BookingsService {
         },
         data: {
           availableQty: {
-              increment: Number(inventoryRow.roomsCount),
+            increment: Number(inventoryRow.roomsCount),
           },
         },
       });
@@ -532,13 +550,11 @@ export class BookingsService {
   private calculateRefund(
     totalAmount: Prisma.Decimal,
     checkInDate: Date,
-    policy:
-      | {
-          cancellationType: cancellation_type_enum;
-          freeCancelHours: number | null;
-          cancelPenaltyPercent: Prisma.Decimal;
-        }
-      | null,
+    policy: {
+      cancellationType: cancellation_type_enum;
+      freeCancelHours: number | null;
+      cancelPenaltyPercent: Prisma.Decimal;
+    } | null,
   ) {
     const penaltyPercent = this.calculatePenaltyPercent(checkInDate, policy);
     const penaltyAmount = totalAmount.times(penaltyPercent).div(100);
@@ -554,13 +570,11 @@ export class BookingsService {
 
   private calculatePenaltyPercent(
     checkInDate: Date,
-    policy:
-      | {
-          cancellationType: cancellation_type_enum;
-          freeCancelHours: number | null;
-          cancelPenaltyPercent: Prisma.Decimal;
-        }
-      | null,
+    policy: {
+      cancellationType: cancellation_type_enum;
+      freeCancelHours: number | null;
+      cancelPenaltyPercent: Prisma.Decimal;
+    } | null,
   ): Prisma.Decimal {
     if (!policy || policy.cancellationType === cancellation_type_enum.free) {
       return new Prisma.Decimal(0);
@@ -578,7 +592,9 @@ export class BookingsService {
     }
 
     const penaltyStartsAt = new Date(checkInDate);
-    penaltyStartsAt.setUTCHours(penaltyStartsAt.getUTCHours() - freeCancelHours);
+    penaltyStartsAt.setUTCHours(
+      penaltyStartsAt.getUTCHours() - freeCancelHours,
+    );
 
     return new Date().getTime() >= penaltyStartsAt.getTime()
       ? configuredPenalty
@@ -598,8 +614,9 @@ export class BookingsService {
     `;
 
     const aggregate = aggregates[0];
-    const avgRating = (aggregate?.avg_rating ?? new Prisma.Decimal(0))
-      .toDecimalPlaces(2);
+    const avgRating = (
+      aggregate?.avg_rating ?? new Prisma.Decimal(0)
+    ).toDecimalPlaces(2);
     const totalReviews = aggregate ? Number(aggregate.total_reviews) : 0;
 
     await tx.property.update({

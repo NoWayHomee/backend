@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { CreateReviewDto } from './dto/create-review.dto';
+import { CustomerCreateReviewDto } from './dto/create-review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -18,7 +18,7 @@ export class ReviewsService {
   async createReview(
     user: AuthenticatedUser,
     bookingId: string,
-    dto: CreateReviewDto,
+    dto: CustomerCreateReviewDto,
   ) {
     const customerId = BigInt(user.id);
     const bookingBigInt = this.parseBigIntParam(bookingId, 'bookingId');

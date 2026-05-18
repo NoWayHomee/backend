@@ -1,0 +1,1323 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully."
+          },
+          "409": {
+            "description": "Email already exists."
+          }
+        },
+        "summary": "Register a customer account",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Login successful and access token returned."
+          },
+          "401": {
+            "description": "Invalid email or password."
+          }
+        },
+        "summary": "Login with email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Refresh token rotated successfully."
+          },
+          "401": {
+            "description": "Invalid refresh token."
+          }
+        },
+        "summary": "Rotate refresh token and issue a new access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully."
+          },
+          "401": {
+            "description": "Invalid active session."
+          }
+        },
+        "summary": "Logout current device session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/admin/partners/{partnerProfileId}/kyc": {
+      "patch": {
+        "operationId": "AdminController_updateKycStatus",
+        "parameters": [
+          {
+            "name": "partnerProfileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateKycStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partner KYC status updated successfully."
+          },
+          "403": {
+            "description": "Admin role is required."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject a partner KYC application",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/properties/{propertyId}/status": {
+      "patch": {
+        "operationId": "AdminController_updatePropertyStatus",
+        "parameters": [
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePropertyStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property moderation status updated successfully."
+          },
+          "403": {
+            "description": "Admin role is required."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve, reject, or suspend a property listing",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/properties/search": {
+      "get": {
+        "operationId": "PropertiesController_search",
+        "parameters": [
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "Ho Chi Minh City",
+              "type": "string"
+            }
+          },
+          {
+            "name": "star_rating",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 5,
+              "example": 4,
+              "type": "number"
+            }
+          },
+          {
+            "name": "min_price",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "example": 500000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_price",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "example": 2500000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "check_in",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-06-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "check_out",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-06-03",
+              "type": "string"
+            }
+          },
+          {
+            "name": "rooms_needed",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns active properties matching search and availability."
+          }
+        },
+        "summary": "Search public properties",
+        "tags": [
+          "Properties"
+        ]
+      }
+    },
+    "/properties/{slug}": {
+      "get": {
+        "operationId": "PropertiesController_findBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "check_in",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-06-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "check_out",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-06-03",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns property details and room types."
+          }
+        },
+        "summary": "Get public property detail by slug",
+        "tags": [
+          "Properties"
+        ]
+      }
+    },
+    "/partner/properties": {
+      "post": {
+        "operationId": "PartnerPropertiesController_createProperty",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePropertyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft property created."
+          },
+          "403": {
+            "description": "Partner role is required."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a draft property for the current partner",
+        "tags": [
+          "Partner Properties"
+        ]
+      }
+    },
+    "/partner/properties/{id}": {
+      "patch": {
+        "operationId": "PartnerPropertiesController_updateProperty",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePropertyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Owned property updated."
+          },
+          "404": {
+            "description": "Property not found or not owned."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update owned property details",
+        "tags": [
+          "Partner Properties"
+        ]
+      }
+    },
+    "/partner/properties/{id}/policies": {
+      "post": {
+        "operationId": "PartnerPropertiesController_upsertPolicies",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertPropertyPoliciesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property policies saved."
+          },
+          "404": {
+            "description": "Property not found or not owned."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create or update owned property policies",
+        "tags": [
+          "Partner Properties"
+        ]
+      }
+    },
+    "/partner/properties/{id}/amenities": {
+      "post": {
+        "operationId": "PartnerPropertiesController_updateAmenities",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePropertyAmenitiesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property amenities replaced."
+          },
+          "404": {
+            "description": "Property not found or not owned."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace amenities for an owned property",
+        "tags": [
+          "Partner Properties"
+        ]
+      }
+    },
+    "/partner/properties/{id}/room-types": {
+      "post": {
+        "operationId": "PartnerPropertiesController_createRoomType",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoomTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Room type created."
+          },
+          "404": {
+            "description": "Property not found or not owned."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a room type for an owned property",
+        "tags": [
+          "Partner Properties"
+        ]
+      }
+    },
+    "/partner/room-types/{roomTypeId}/daily-rates/generate": {
+      "post": {
+        "operationId": "PartnerRoomTypesController_generateDailyRates",
+        "parameters": [
+          {
+            "name": "roomTypeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateDailyRatesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Daily inventory and rates generated for the room type."
+          },
+          "404": {
+            "description": "Room type not found or not owned."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate daily inventory for a room type",
+        "tags": [
+          "Partner Room Types"
+        ]
+      }
+    },
+    "/partner/media/presigned-url": {
+      "get": {
+        "operationId": "MediaController_getPresignedUrl",
+        "parameters": [
+          {
+            "name": "folder",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presigned upload URL returned for the requested folder."
+          },
+          "403": {
+            "description": "Partner role is required."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get Cloudinary presigned upload URL",
+        "tags": [
+          "Partner Media"
+        ]
+      }
+    },
+    "/bookings": {
+      "post": {
+        "operationId": "BookingsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created."
+          },
+          "400": {
+            "description": "Invalid dates or no availability."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a booking with locked room inventory",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/bookings/me": {
+      "get": {
+        "operationId": "BookingsController_findMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns bookings for the authenticated customer."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List bookings for the current customer",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/bookings/{id}/cancel": {
+      "post": {
+        "operationId": "BookingsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Booking cancelled and availability restored."
+          },
+          "404": {
+            "description": "Booking not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a booking and restore availability",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/bookings/{id}/reviews": {
+      "post": {
+        "operationId": "BookingsController_createReview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingCreateReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking review created."
+          },
+          "400": {
+            "description": "Booking is not eligible for a review."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Review a checked-out booking",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/reviews/{bookingId}": {
+      "post": {
+        "operationId": "ReviewsController_createReview",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerCreateReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Review submitted successfully."
+          },
+          "400": {
+            "description": "Booking is not eligible for a review."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit a post-stay review for a completed booking",
+        "tags": [
+          "Reviews"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "NoWayHome API",
+    "description": "",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "customer@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "StrongPass123",
+            "minLength": 8
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Nguyen Van A"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+84901234567"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "partner",
+              "admin"
+            ],
+            "example": "customer"
+          },
+          "businessName": {
+            "type": "string",
+            "example": "Nguyen Van A Travel Co."
+          },
+          "businessType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "company"
+            ],
+            "example": "individual"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "phone",
+          "userType"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "customer@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "StrongPass123",
+            "minLength": 8
+          },
+          "deviceName": {
+            "type": "string",
+            "example": "Chrome on Windows"
+          },
+          "deviceType": {
+            "type": "string",
+            "enum": [
+              "web",
+              "ios",
+              "android",
+              "other"
+            ],
+            "example": "web"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "UpdateKycStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "UpdatePropertyStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "pending_review",
+              "rejected"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreatePropertyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "NoWayHome Central Hotel"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": [
+              "hotel",
+              "homestay",
+              "resort",
+              "apartment",
+              "villa",
+              "hostel"
+            ],
+            "example": "hotel"
+          },
+          "city": {
+            "type": "string",
+            "example": "Ho Chi Minh City"
+          },
+          "address": {
+            "type": "string",
+            "example": "12 Nguyen Hue, District 1"
+          },
+          "latitude": {
+            "type": "number",
+            "example": 10.7758439
+          },
+          "longitude": {
+            "type": "number",
+            "example": 106.7017555
+          },
+          "description": {
+            "type": "string",
+            "example": "Modern hotel in the city center."
+          }
+        },
+        "required": [
+          "name",
+          "propertyType",
+          "city",
+          "address",
+          "latitude",
+          "longitude"
+        ]
+      },
+      "UpdatePropertyDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "A centrally located hotel for business and leisure travelers."
+          },
+          "check_in_time": {
+            "type": "string",
+            "example": "14:00"
+          },
+          "check_out_time": {
+            "type": "string",
+            "example": "12:00"
+          }
+        }
+      },
+      "UpsertPropertyPoliciesDto": {
+        "type": "object",
+        "properties": {
+          "cancellation_type": {
+            "type": "string",
+            "enum": [
+              "free",
+              "flexible",
+              "moderate",
+              "strict",
+              "non_refundable"
+            ]
+          },
+          "free_cancel_hours": {
+            "type": "number",
+            "example": 24
+          },
+          "cancel_penalty_percent": {
+            "type": "number",
+            "example": 50
+          },
+          "min_stay_nights": {
+            "type": "number",
+            "example": 1
+          },
+          "max_stay_nights": {
+            "type": "number",
+            "example": 30
+          },
+          "check_in_from": {
+            "type": "string",
+            "example": "14:00"
+          },
+          "check_in_until": {
+            "type": "string",
+            "example": "22:00"
+          },
+          "check_out_from": {
+            "type": "string",
+            "example": "00:00"
+          },
+          "check_out_until": {
+            "type": "string",
+            "example": "12:00"
+          },
+          "early_check_in_allowed": {
+            "type": "boolean",
+            "example": false
+          },
+          "early_check_in_fee": {
+            "type": "number",
+            "example": 150000
+          },
+          "late_check_out_allowed": {
+            "type": "boolean",
+            "example": false
+          },
+          "late_check_out_fee": {
+            "type": "number",
+            "example": 150000
+          },
+          "pets_allowed": {
+            "type": "boolean",
+            "example": false
+          },
+          "smoking_allowed": {
+            "type": "boolean",
+            "example": false
+          },
+          "children_allowed": {
+            "type": "boolean",
+            "example": true
+          },
+          "no_show_penalty_type": {
+            "type": "string",
+            "enum": [
+              "full_amount",
+              "first_night",
+              "percent"
+            ]
+          },
+          "instant_confirmation": {
+            "type": "boolean",
+            "example": true
+          },
+          "deposit_required": {
+            "type": "boolean",
+            "example": false
+          },
+          "deposit_type": {
+            "type": "string",
+            "enum": [
+              "percent",
+              "fixed"
+            ]
+          },
+          "deposit_value": {
+            "type": "number",
+            "example": 10
+          },
+          "accepted_payment_methods": {
+            "example": [
+              "credit_card",
+              "pay_later"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "breakfast_included": {
+            "type": "boolean",
+            "example": false
+          },
+          "parking_type": {
+            "type": "string",
+            "enum": [
+              "free",
+              "paid",
+              "none"
+            ]
+          },
+          "parties_allowed": {
+            "type": "boolean",
+            "example": false
+          },
+          "quiet_hours_start": {
+            "type": "string",
+            "example": "22:00"
+          },
+          "quiet_hours_end": {
+            "type": "string",
+            "example": "06:00"
+          },
+          "custom_rules": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdatePropertyAmenitiesDto": {
+        "type": "object",
+        "properties": {
+          "amenity_ids": {
+            "example": [
+              1,
+              2,
+              3
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "amenity_ids"
+        ]
+      },
+      "CreateRoomTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Deluxe Double Room"
+          },
+          "description": {
+            "type": "string",
+            "example": "A comfortable room with city view."
+          },
+          "areaSqm": {
+            "type": "number",
+            "example": 28.5
+          },
+          "maxOccupancy": {
+            "type": "number",
+            "example": 2
+          },
+          "basePrice": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "example": "1200000.00"
+          },
+          "totalRooms": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "name",
+          "areaSqm",
+          "maxOccupancy",
+          "basePrice",
+          "totalRooms"
+        ]
+      },
+      "GenerateDailyRatesDto": {
+        "type": "object",
+        "properties": {
+          "ratePlanId": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "example": "1"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-01"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-30"
+          }
+        },
+        "required": [
+          "ratePlanId",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "CreateBookingDto": {
+        "type": "object",
+        "properties": {
+          "propertyId": {
+            "type": "number",
+            "example": 1,
+            "description": "Property ID"
+          },
+          "roomTypeId": {
+            "type": "number",
+            "example": 1,
+            "description": "Room type ID"
+          },
+          "ratePlanId": {
+            "type": "number",
+            "example": 1,
+            "description": "Rate plan ID"
+          },
+          "checkInDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-01",
+            "description": "Check-in date (YYYY-MM-DD)"
+          },
+          "checkOutDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-03",
+            "description": "Check-out date (YYYY-MM-DD)"
+          },
+          "numAdults": {
+            "type": "number",
+            "example": 2,
+            "description": "Number of adults"
+          },
+          "numChildren": {
+            "type": "object",
+            "example": 0,
+            "default": 0,
+            "description": "Number of children"
+          },
+          "roomsNeeded": {
+            "type": "object",
+            "example": 1,
+            "default": 1,
+            "description": "Number of rooms needed"
+          }
+        },
+        "required": [
+          "propertyId",
+          "roomTypeId",
+          "ratePlanId",
+          "checkInDate",
+          "checkOutDate",
+          "numAdults"
+        ]
+      },
+      "BookingCreateReviewDto": {
+        "type": "object",
+        "properties": {
+          "overall_rating": {
+            "type": "number",
+            "example": 4.5,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "content": {
+            "type": "string",
+            "example": "Clean room and helpful service."
+          }
+        },
+        "required": [
+          "overall_rating"
+        ]
+      },
+      "CustomerCreateReviewDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Overall rating (1–5)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Optional review comment"
+          }
+        },
+        "required": [
+          "rating"
+        ]
+      }
+    }
+  }
+}

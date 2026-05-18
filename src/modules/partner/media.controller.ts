@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -16,9 +21,12 @@ export class MediaController {
 
   @Get('presigned-url')
   @ApiOperation({ summary: 'Get Cloudinary presigned upload URL' })
-  getPresignedUrl(
-    @Query('folder') folder: string = 'nowayhome/properties',
-  ) {
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned upload URL returned for the requested folder.',
+  })
+  @ApiResponse({ status: 403, description: 'Partner role is required.' })
+  getPresignedUrl(@Query('folder') folder: string = 'nowayhome/properties') {
     return this.mediaService.getPresignedUrl(folder);
   }
 }

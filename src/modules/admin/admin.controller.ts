@@ -1,5 +1,10 @@
 import { Body, Controller, Param, Patch } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -18,6 +23,11 @@ export class AdminController {
 
   @Patch('partners/:partnerProfileId/kyc')
   @ApiOperation({ summary: 'Approve or reject a partner KYC application' })
+  @ApiResponse({
+    status: 200,
+    description: 'Partner KYC status updated successfully.',
+  })
+  @ApiResponse({ status: 403, description: 'Admin role is required.' })
   updateKycStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('partnerProfileId') partnerProfileId: string,
@@ -28,6 +38,11 @@ export class AdminController {
 
   @Patch('properties/:propertyId/status')
   @ApiOperation({ summary: 'Approve, reject, or suspend a property listing' })
+  @ApiResponse({
+    status: 200,
+    description: 'Property moderation status updated successfully.',
+  })
+  @ApiResponse({ status: 403, description: 'Admin role is required.' })
   updatePropertyStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('propertyId') propertyId: string,

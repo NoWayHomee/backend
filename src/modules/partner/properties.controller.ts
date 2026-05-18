@@ -1,5 +1,17 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -24,6 +36,8 @@ export class PartnerPropertiesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a draft property for the current partner' })
+  @ApiResponse({ status: 201, description: 'Draft property created.' })
+  @ApiResponse({ status: 403, description: 'Partner role is required.' })
   createProperty(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreatePropertyDto,
@@ -33,6 +47,8 @@ export class PartnerPropertiesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update owned property details' })
+  @ApiResponse({ status: 200, description: 'Owned property updated.' })
+  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
   updateProperty(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -45,6 +61,8 @@ export class PartnerPropertiesController {
 
   @Post(':id/policies')
   @ApiOperation({ summary: 'Create or update owned property policies' })
+  @ApiResponse({ status: 201, description: 'Property policies saved.' })
+  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
   upsertPolicies(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -57,6 +75,8 @@ export class PartnerPropertiesController {
 
   @Post(':id/amenities')
   @ApiOperation({ summary: 'Replace amenities for an owned property' })
+  @ApiResponse({ status: 201, description: 'Property amenities replaced.' })
+  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
   updateAmenities(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -69,6 +89,8 @@ export class PartnerPropertiesController {
 
   @Post(':id/room-types')
   @ApiOperation({ summary: 'Create a room type for an owned property' })
+  @ApiResponse({ status: 201, description: 'Room type created.' })
+  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
   createRoomType(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

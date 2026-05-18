@@ -18,7 +18,7 @@ import {
   type ReviewResult,
 } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { CreateReviewDto } from './dto/create-review.dto';
+import { BookingCreateReviewDto } from './dto/create-review.dto';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
@@ -30,7 +30,10 @@ export class BookingsController {
   @Post()
   @ApiOperation({ summary: 'Create a booking with locked room inventory' })
   @ApiResponse({ status: 201, description: 'Booking created.' })
-  @ApiResponse({ status: 400, description: 'Invalid dates or no availability.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid dates or no availability.',
+  })
   create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateBookingDto,
@@ -40,6 +43,10 @@ export class BookingsController {
 
   @Get('me')
   @ApiOperation({ summary: 'List bookings for the current customer' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns bookings for the authenticated customer.',
+  })
   findMine(@CurrentUser() user: AuthenticatedUser): Promise<Booking[]> {
     return this.bookingsService.findMine(user);
   }
@@ -47,6 +54,11 @@ export class BookingsController {
   @Post(':id/cancel')
   @ApiOperation({ summary: 'Cancel a booking and restore availability' })
   @ApiParam({ name: 'id', example: 1 })
+  @ApiResponse({
+    status: 201,
+    description: 'Booking cancelled and availability restored.',
+  })
+  @ApiResponse({ status: 404, description: 'Booking not found.' })
   cancel(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -57,10 +69,15 @@ export class BookingsController {
   @Post(':id/reviews')
   @ApiOperation({ summary: 'Review a checked-out booking' })
   @ApiParam({ name: 'id', example: 1 })
+  @ApiResponse({ status: 201, description: 'Booking review created.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Booking is not eligible for a review.',
+  })
   createReview(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
-    @Body() dto: CreateReviewDto,
+    @Body() dto: BookingCreateReviewDto,
   ): Promise<ReviewResult> {
     return this.bookingsService.createReview(user, id, dto);
   }

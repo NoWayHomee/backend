@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -21,11 +23,19 @@ async function bootstrap(): Promise<void> {
   );
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Agoda Clone API')
+    .setTitle('NoWayHome API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+
+  if (process.env.NODE_ENV !== 'production') {
+    writeFileSync(
+      join(process.cwd(), 'swagger-spec.json'),
+      JSON.stringify(swaggerDocument, null, 2),
+    );
+  }
+
   SwaggerModule.setup('api-docs', app, swaggerDocument);
 
   await app.listen(process.env.PORT ?? 3000);

@@ -1,5 +1,10 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -20,6 +25,14 @@ export class PartnerRoomTypesController {
 
   @Post(':roomTypeId/daily-rates/generate')
   @ApiOperation({ summary: 'Generate daily inventory for a room type' })
+  @ApiResponse({
+    status: 201,
+    description: 'Daily inventory and rates generated for the room type.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Room type not found or not owned.',
+  })
   generateDailyRates(
     @CurrentUser() user: AuthenticatedUser,
     @Param('roomTypeId') roomTypeId: string,
