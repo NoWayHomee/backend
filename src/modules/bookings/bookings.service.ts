@@ -51,18 +51,18 @@ interface ReviewIdRow {
   id: bigint;
 }
 
-export interface CancellationResult {
+type CancellationResult = {
   booking_id: bigint;
   status: booking_status_enum;
   totalAmount: Prisma.Decimal;
   penaltyPercent: Prisma.Decimal;
   penaltyAmount: Prisma.Decimal;
   refundAmount: Prisma.Decimal;
-}
+};
 
-export interface ReviewResult {
+type ReviewResult = {
   id: bigint;
-}
+};
 
 @Injectable()
 export class BookingsService {
@@ -165,6 +165,7 @@ export class BookingsService {
     const checkInDate = this.toUtcDateOnly(dto.checkInDate);
     const checkOutDate = this.toUtcDateOnly(dto.checkOutDate);
     const numNights = this.calculateNights(checkInDate, checkOutDate);
+    const roomsNeeded = dto.roomsNeeded ?? 1;
 
     return this.prisma.$transaction(async (tx) => {
       const roomType = await tx.roomType.findFirst({
@@ -200,11 +201,11 @@ export class BookingsService {
           status: 'available',
         },
         orderBy: { id: 'asc' },
-        take: dto.roomsNeeded,
+        take: roomsNeeded,
         select: { id: true },
       });
 
-      if (assignableRooms.length < dto.roomsNeeded) {
+      if (assignableRooms.length < roomsNeeded) {
         throw new BadRequestException(
           'Not enough physical rooms are configured',
         );
@@ -221,7 +222,7 @@ export class BookingsService {
       this.assertCompleteAndAvailableInventory(
         lockedRates,
         numNights,
-        dto.roomsNeeded,
+        roomsNeeded,
       );
 
       await Promise.all(
@@ -230,7 +231,7 @@ export class BookingsService {
             where: { id: rate.id },
             data: {
               availableQty: {
-                decrement: dto.roomsNeeded,
+                decrement: roomsNeeded,
               },
             },
           }),
@@ -238,7 +239,7 @@ export class BookingsService {
       );
 
       const subtotalAmount = lockedRates.reduce(
-        (sum, rate) => sum.plus(rate.price.times(dto.roomsNeeded)),
+        (sum, rate) => sum.plus(rate.price.times(roomsNeeded)),
         new Prisma.Decimal(0),
       );
       const taxAmount = subtotalAmount.times(TAX_RATE);
@@ -265,9 +266,7 @@ export class BookingsService {
         },
       });
 
-      const averageRoomPrice = subtotalAmount
-        .div(dto.roomsNeeded)
-        .div(numNights);
+      const averageRoomPrice = subtotalAmount.div(roomsNeeded).div(numNights);
       await this.createBookingRooms(
         tx,
         booking.id,

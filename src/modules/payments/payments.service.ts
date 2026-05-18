@@ -7,13 +7,20 @@ import {
 import { $Enums } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { WebhookDto } from './dto/webhook.dto';
+import {
+  CheckoutResponseDto,
+  WebhookResponseDto,
+} from 'src/common/dto/response.dto';
 
 @Injectable()
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async checkout(bookingId: string, userId: string) {
-    const id = BigInt(bookingId);
+  async checkout(
+    bookingId: string,
+    userId: string,
+  ): Promise<CheckoutResponseDto> {
+    const id = this.parseBigIntParam(bookingId, 'bookingId');
     const booking = await this.prisma.booking.findUnique({
       where: { id },
     });
@@ -28,10 +35,12 @@ export class PaymentsService {
       throw new BadRequestException('Booking is not in pending status.');
     }
 
-    return { checkoutUrl: 'https://mock-gateway.com/pay?ref=' + booking.bookingCode };
+    return {
+      checkoutUrl: 'https://mock-gateway.com/pay?ref=' + booking.bookingCode,
+    };
   }
 
-  async handleWebhook(dto: WebhookDto) {
+  async handleWebhook(dto: WebhookDto): Promise<WebhookResponseDto> {
     await this.prisma.$transaction(async (tx) => {
       const booking = await tx.booking.findUnique({
         where: { bookingCode: dto.bookingCode },
@@ -76,5 +85,13 @@ export class PaymentsService {
     });
 
     return { received: true };
+  }
+
+  private parseBigIntParam(value: string, paramName: string): bigint {
+    if (!/^\d+$/.test(value)) {
+      throw new BadRequestException(`${paramName} must be a positive integer`);
+    }
+
+    return BigInt(value);
   }
 }

@@ -44,13 +44,19 @@ export class CreateBookingDto {
   @Min(1)
   ratePlanId!: number;
 
-  @ApiProperty({ example: '2026-06-01', description: 'Check-in date (YYYY-MM-DD)' })
+  @ApiProperty({
+    example: '2026-06-01',
+    description: 'Check-in date (YYYY-MM-DD)',
+  })
   @Type(() => Date)
   @IsDate()
   @Validate(CheckInBeforeCheckOut)
   checkInDate!: Date;
 
-  @ApiProperty({ example: '2026-06-03', description: 'Check-out date (YYYY-MM-DD)' })
+  @ApiProperty({
+    example: '2026-06-03',
+    description: 'Check-out date (YYYY-MM-DD)',
+  })
   @Type(() => Date)
   @IsDate()
   checkOutDate!: Date;
@@ -61,15 +67,23 @@ export class CreateBookingDto {
   @Min(1)
   numAdults!: number;
 
-  @ApiPropertyOptional({ example: 0, default: 0, description: 'Number of children' })
+  @ApiPropertyOptional({
+    example: 0,
+    default: 0,
+    description: 'Number of children',
+  })
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  numChildren = 0;
+  numChildren?: number = 0;
 
-  @ApiPropertyOptional({ example: 1, default: 1, description: 'Number of rooms needed' })
+  @ApiPropertyOptional({
+    example: 1,
+    default: 1,
+    description: 'Number of rooms needed',
+  })
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  roomsNeeded = 1;
+  roomsNeeded?: number = 1;
 }

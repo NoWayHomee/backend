@@ -7,14 +7,25 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import {
+  PropertyAmenityResponseDto,
+  PropertyPolicyResponseDto,
+  PropertyResponseDto,
+  RoomTypeResponseDto,
+} from '../../common/dto/response.dto';
 import { Role } from '../../common/enums/role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -36,68 +47,119 @@ export class PartnerPropertiesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a draft property for the current partner' })
-  @ApiResponse({ status: 201, description: 'Draft property created.' })
-  @ApiResponse({ status: 403, description: 'Partner role is required.' })
-  createProperty(
+  @ApiCreatedResponse({
+    description: 'Draft property created.',
+    type: PropertyResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid property payload.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Partner role is required.' })
+  async createProperty(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreatePropertyDto,
-  ) {
-    return this.partnerService.createProperty(user, dto);
+  ): Promise<PropertyResponseDto> {
+    const property = await this.partnerService.createProperty(user, dto);
+
+    return PropertyResponseDto.from(property);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update owned property details' })
-  @ApiResponse({ status: 200, description: 'Owned property updated.' })
-  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
-  updateProperty(
+  @ApiOkResponse({
+    description: 'Owned property updated.',
+    type: PropertyResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid property update payload.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Partner role is required.' })
+  @ApiNotFoundResponse({ description: 'Property not found or not owned.' })
+  async updateProperty(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdatePropertyDto,
-  ) {
+  ): Promise<PropertyResponseDto> {
     const propertyId = this.partnerService.parseBigIntParam(id, 'id');
+    const property = await this.partnerService.updateProperty(
+      user,
+      propertyId,
+      dto,
+    );
 
-    return this.partnerService.updateProperty(user, propertyId, dto);
+    return PropertyResponseDto.from(property);
   }
 
   @Post(':id/policies')
   @ApiOperation({ summary: 'Create or update owned property policies' })
-  @ApiResponse({ status: 201, description: 'Property policies saved.' })
-  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
-  upsertPolicies(
+  @ApiCreatedResponse({
+    description: 'Property policies saved.',
+    type: PropertyPolicyResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid property policy payload.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Partner role is required.' })
+  @ApiNotFoundResponse({ description: 'Property not found or not owned.' })
+  async upsertPolicies(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpsertPropertyPoliciesDto,
-  ) {
+  ): Promise<PropertyPolicyResponseDto> {
     const propertyId = this.partnerService.parseBigIntParam(id, 'id');
+    const policy = await this.partnerService.upsertPropertyPolicies(
+      user,
+      propertyId,
+      dto,
+    );
 
-    return this.partnerService.upsertPropertyPolicies(user, propertyId, dto);
+    return PropertyPolicyResponseDto.from(policy);
   }
 
   @Post(':id/amenities')
   @ApiOperation({ summary: 'Replace amenities for an owned property' })
-  @ApiResponse({ status: 201, description: 'Property amenities replaced.' })
-  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
-  updateAmenities(
+  @ApiCreatedResponse({
+    description: 'Property amenities replaced.',
+    type: [PropertyAmenityResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'One or more amenities are invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Partner role is required.' })
+  @ApiNotFoundResponse({ description: 'Property not found or not owned.' })
+  async updateAmenities(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdatePropertyAmenitiesDto,
-  ) {
+  ): Promise<PropertyAmenityResponseDto[]> {
     const propertyId = this.partnerService.parseBigIntParam(id, 'id');
+    const amenities = await this.partnerService.updatePropertyAmenities(
+      user,
+      propertyId,
+      dto,
+    );
 
-    return this.partnerService.updatePropertyAmenities(user, propertyId, dto);
+    return amenities.map(PropertyAmenityResponseDto.from);
   }
 
   @Post(':id/room-types')
   @ApiOperation({ summary: 'Create a room type for an owned property' })
-  @ApiResponse({ status: 201, description: 'Room type created.' })
-  @ApiResponse({ status: 404, description: 'Property not found or not owned.' })
-  createRoomType(
+  @ApiCreatedResponse({
+    description: 'Room type created.',
+    type: RoomTypeResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid room type payload.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Partner role is required.' })
+  @ApiNotFoundResponse({ description: 'Property not found or not owned.' })
+  async createRoomType(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: CreateRoomTypeDto,
-  ) {
+  ): Promise<RoomTypeResponseDto> {
     const propertyId = this.partnerService.parseBigIntParam(id, 'id');
+    const roomType = await this.partnerService.createRoomType(
+      user,
+      propertyId,
+      dto,
+    );
 
-    return this.partnerService.createRoomType(user, propertyId, dto);
+    return RoomTypeResponseDto.from(roomType);
   }
 }

@@ -1,13 +1,21 @@
 import { Body, Controller, Param, Patch } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import {
+  PartnerKycResponseDto,
+  PropertyResponseDto,
+} from '../../common/dto/response.dto';
 import { Role } from '../../common/enums/role.enum';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { AdminService } from './admin.service';
@@ -23,31 +31,49 @@ export class AdminController {
 
   @Patch('partners/:partnerProfileId/kyc')
   @ApiOperation({ summary: 'Approve or reject a partner KYC application' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Partner KYC status updated successfully.',
+    type: PartnerKycResponseDto,
   })
-  @ApiResponse({ status: 403, description: 'Admin role is required.' })
-  updateKycStatus(
+  @ApiBadRequestResponse({ description: 'Invalid KYC status payload.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Admin role is required.' })
+  @ApiNotFoundResponse({ description: 'Partner profile not found.' })
+  async updateKycStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('partnerProfileId') partnerProfileId: string,
     @Body() dto: UpdateKycStatusDto,
-  ) {
-    return this.adminService.updateKycStatus(user, partnerProfileId, dto);
+  ): Promise<PartnerKycResponseDto> {
+    const partner = await this.adminService.updateKycStatus(
+      user,
+      partnerProfileId,
+      dto,
+    );
+
+    return PartnerKycResponseDto.from(partner);
   }
 
   @Patch('properties/:propertyId/status')
   @ApiOperation({ summary: 'Approve, reject, or suspend a property listing' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Property moderation status updated successfully.',
+    type: PropertyResponseDto,
   })
-  @ApiResponse({ status: 403, description: 'Admin role is required.' })
-  updatePropertyStatus(
+  @ApiBadRequestResponse({ description: 'Invalid property status payload.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Admin role is required.' })
+  @ApiNotFoundResponse({ description: 'Property not found.' })
+  async updatePropertyStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('propertyId') propertyId: string,
     @Body() dto: UpdatePropertyStatusDto,
-  ) {
-    return this.adminService.updatePropertyStatus(user, propertyId, dto);
+  ): Promise<PropertyResponseDto> {
+    const property = await this.adminService.updatePropertyStatus(
+      user,
+      propertyId,
+      dto,
+    );
+
+    return PropertyResponseDto.from(property);
   }
 }

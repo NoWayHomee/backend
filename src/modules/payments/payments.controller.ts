@@ -2,22 +2,32 @@ import {
   Controller,
   Post,
   Param,
-  Req,
   UseGuards,
   Body,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 import { WebhookDto } from './dto/webhook.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import {
+  CheckoutResponseDto,
+  WebhookResponseDto,
+} from 'src/common/dto/response.dto';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -28,24 +38,32 @@ export class PaymentsController {
   @Post('checkout/:bookingId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a payment checkout session for a booking' })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'Checkout session created for the authenticated customer.',
+    type: CheckoutResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid access token.' })
-  checkout(@Param('bookingId') bookingId: string, @Req() req: any) {
-    return this.paymentsService.checkout(bookingId, req.user.id);
+  @ApiBadRequestResponse({ description: 'Booking is not in pending status.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Booking does not belong to you.' })
+  @ApiNotFoundResponse({ description: 'Booking not found.' })
+  checkout(
+    @Param('bookingId') bookingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<CheckoutResponseDto> {
+    return this.paymentsService.checkout(bookingId, user.id);
   }
 
   @Public()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Receive payment provider webhook notification' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Webhook processed successfully.',
+    type: WebhookResponseDto,
   })
-  handleWebhook(@Body() dto: WebhookDto) {
+  @ApiBadRequestResponse({ description: 'Invalid webhook payload.' })
+  @ApiNotFoundResponse({ description: 'Booking not found.' })
+  handleWebhook(@Body() dto: WebhookDto): Promise<WebhookResponseDto> {
     return this.paymentsService.handleWebhook(dto);
   }
 }

@@ -1,13 +1,19 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { ReviewResponseDto } from '../../common/dto/response.dto';
 import { Role } from '../../common/enums/role.enum';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CustomerCreateReviewDto } from './dto/create-review.dto';
@@ -24,16 +30,26 @@ export class ReviewsController {
   @ApiOperation({
     summary: 'Submit a post-stay review for a completed booking',
   })
-  @ApiResponse({ status: 201, description: 'Review submitted successfully.' })
-  @ApiResponse({
-    status: 400,
+  @ApiCreatedResponse({
+    description: 'Review submitted successfully.',
+    type: ReviewResponseDto,
+  })
+  @ApiBadRequestResponse({
     description: 'Booking is not eligible for a review.',
   })
-  createReview(
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Booking does not belong to you.' })
+  @ApiNotFoundResponse({ description: 'Booking not found.' })
+  @ApiConflictResponse({
+    description: 'A review for this booking already exists.',
+  })
+  async createReview(
     @CurrentUser() user: AuthenticatedUser,
     @Param('bookingId') bookingId: string,
     @Body() dto: CustomerCreateReviewDto,
-  ) {
-    return this.reviewsService.createReview(user, bookingId, dto);
+  ): Promise<ReviewResponseDto> {
+    const review = await this.reviewsService.createReview(user, bookingId, dto);
+
+    return ReviewResponseDto.from(review);
   }
 }

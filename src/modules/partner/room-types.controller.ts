@@ -1,13 +1,18 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { GenerateDailyRatesResponseDto } from '../../common/dto/response.dto';
 import { Role } from '../../common/enums/role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -25,24 +30,29 @@ export class PartnerRoomTypesController {
 
   @Post(':roomTypeId/daily-rates/generate')
   @ApiOperation({ summary: 'Generate daily inventory for a room type' })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'Daily inventory and rates generated for the room type.',
+    type: GenerateDailyRatesResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Room type not found or not owned.',
-  })
-  generateDailyRates(
+  @ApiBadRequestResponse({ description: 'Invalid date range or room type id.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Partner role is required.' })
+  @ApiNotFoundResponse({ description: 'Room type or rate plan not found.' })
+  async generateDailyRates(
     @CurrentUser() user: AuthenticatedUser,
     @Param('roomTypeId') roomTypeId: string,
     @Body() dto: GenerateDailyRatesDto,
-  ) {
+  ): Promise<GenerateDailyRatesResponseDto> {
     const parsedRoomTypeId = this.partnerService.parseBigIntParam(
       roomTypeId,
       'roomTypeId',
     );
+    const response = await this.partnerService.generateDailyRates(
+      user,
+      parsedRoomTypeId,
+      dto,
+    );
 
-    return this.partnerService.generateDailyRates(user, parsedRoomTypeId, dto);
+    return GenerateDailyRatesResponseDto.from(response);
   }
 }

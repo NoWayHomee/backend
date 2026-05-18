@@ -27,9 +27,9 @@ export interface JwtPayload {
   userType: user_type_enum;
 }
 
-export type SafeUser = Omit<User, 'passwordHash' | 'deletedAt'>;
+type SanitizedUserEntity = Omit<User, 'passwordHash' | 'deletedAt'>;
 
-export interface LoginResponse {
+type LoginServiceResult = {
   accessToken: string;
   refreshToken: string;
   user: {
@@ -37,23 +37,23 @@ export interface LoginResponse {
     email: string;
     userType: user_type_enum;
   };
-}
+};
 
-export interface RefreshResponse {
+type RefreshServiceResult = {
   accessToken: string;
   refreshToken: string;
-}
+};
 
 export interface LoginContext {
   ipAddress?: string;
   userAgent?: string;
 }
 
-export interface LogoutResponse {
+type LogoutServiceResult = {
   statusCode: 200;
   message: 'Logged out successfully';
   data: null;
-}
+};
 
 @Injectable()
 export class AuthService {
@@ -65,7 +65,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<SafeUser> {
+  async register(registerDto: RegisterDto): Promise<SanitizedUserEntity> {
     const existingUser = await this.prisma.user.findFirst({
       where: {
         OR: [{ email: registerDto.email }, { phone: registerDto.phone }],
@@ -113,7 +113,7 @@ export class AuthService {
   async login(
     loginDto: LoginDto,
     loginContext: LoginContext,
-  ): Promise<LoginResponse> {
+  ): Promise<LoginServiceResult> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
 
     const temporaryTokenHash = await bcrypt.hash(randomUUID(), this.saltRounds);
@@ -175,7 +175,9 @@ export class AuthService {
     return user;
   }
 
-  async refresh(refreshTokenDto: RefreshTokenDto): Promise<RefreshResponse> {
+  async refresh(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<RefreshServiceResult> {
     const payload = await this.verifyRefreshToken(refreshTokenDto.refreshToken);
     const userId = BigInt(payload.sub);
     const now = new Date();
@@ -228,7 +230,10 @@ export class AuthService {
     return tokens;
   }
 
-  async logout(userId: string, sessionId?: string): Promise<LogoutResponse> {
+  async logout(
+    userId: string,
+    sessionId?: string,
+  ): Promise<LogoutServiceResult> {
     const parsedUserId = this.parseTokenBigInt(userId);
     const parsedSessionId = sessionId
       ? this.parseTokenBigInt(sessionId)
@@ -288,7 +293,7 @@ export class AuthService {
   private async generateTokens(
     user: User,
     _sessionId: bigint,
-  ): Promise<RefreshResponse> {
+  ): Promise<RefreshServiceResult> {
     const payload: JwtPayload = {
       sub: user.id.toString(),
       email: user.email,
@@ -375,7 +380,7 @@ export class AuthService {
     return value * multipliers[unit];
   }
 
-  private excludePasswordHash(user: User): SafeUser {
+  private excludePasswordHash(user: User): SanitizedUserEntity {
     return {
       id: user.id,
       uuid: user.uuid,
