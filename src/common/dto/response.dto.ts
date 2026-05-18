@@ -391,7 +391,12 @@ export class LogoutResponseDto {
   @ApiProperty({ example: 'Logged out successfully' })
   message!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({
+    type: 'object',
+    nullable: true,
+    example: null,
+    additionalProperties: false,
+  })
   data!: null;
 }
 

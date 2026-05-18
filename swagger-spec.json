@@ -17,10 +17,20 @@
         },
         "responses": {
           "201": {
-            "description": "User registered successfully."
+            "description": "User registered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid registration payload."
           },
           "409": {
-            "description": "Email already exists."
+            "description": "Email or phone already exists."
           }
         },
         "summary": "Register a customer account",
@@ -45,7 +55,17 @@
         },
         "responses": {
           "201": {
-            "description": "Login successful and access token returned."
+            "description": "Login successful and access token returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid login payload."
           },
           "401": {
             "description": "Invalid email or password."
@@ -73,7 +93,17 @@
         },
         "responses": {
           "201": {
-            "description": "Refresh token rotated successfully."
+            "description": "Refresh token rotated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid refresh payload."
           },
           "401": {
             "description": "Invalid refresh token."
@@ -91,7 +121,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Logged out successfully."
+            "description": "Logged out successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Invalid active session."
@@ -128,10 +165,26 @@
         },
         "responses": {
           "200": {
-            "description": "Partner KYC status updated successfully."
+            "description": "Partner KYC status updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerKycResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid KYC status payload."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
           },
           "403": {
             "description": "Admin role is required."
+          },
+          "404": {
+            "description": "Partner profile not found."
           }
         },
         "security": [
@@ -170,10 +223,26 @@
         },
         "responses": {
           "200": {
-            "description": "Property moderation status updated successfully."
+            "description": "Property moderation status updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid property status payload."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
           },
           "403": {
             "description": "Admin role is required."
+          },
+          "404": {
+            "description": "Property not found."
           }
         },
         "security": [
@@ -286,7 +355,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns active properties matching search and availability."
+            "description": "Returns active properties matching search and availability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPropertySearchResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search filters."
           }
         },
         "summary": "Search public properties",
@@ -328,7 +407,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns property details and room types."
+            "description": "Returns property details and room types.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range."
+          },
+          "404": {
+            "description": "Property not found."
           }
         },
         "summary": "Get public property detail by slug",
@@ -353,7 +445,20 @@
         },
         "responses": {
           "201": {
-            "description": "Draft property created."
+            "description": "Draft property created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid property payload."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
           },
           "403": {
             "description": "Partner role is required."
@@ -395,7 +500,23 @@
         },
         "responses": {
           "200": {
-            "description": "Owned property updated."
+            "description": "Owned property updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid property update payload."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Partner role is required."
           },
           "404": {
             "description": "Property not found or not owned."
@@ -437,7 +558,23 @@
         },
         "responses": {
           "201": {
-            "description": "Property policies saved."
+            "description": "Property policies saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyPolicyResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid property policy payload."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Partner role is required."
           },
           "404": {
             "description": "Property not found or not owned."
@@ -479,7 +616,26 @@
         },
         "responses": {
           "201": {
-            "description": "Property amenities replaced."
+            "description": "Property amenities replaced.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropertyAmenityResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more amenities are invalid."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Partner role is required."
           },
           "404": {
             "description": "Property not found or not owned."
@@ -521,7 +677,23 @@
         },
         "responses": {
           "201": {
-            "description": "Room type created."
+            "description": "Room type created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomTypeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid room type payload."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Partner role is required."
           },
           "404": {
             "description": "Property not found or not owned."
@@ -563,10 +735,26 @@
         },
         "responses": {
           "201": {
-            "description": "Daily inventory and rates generated for the room type."
+            "description": "Daily inventory and rates generated for the room type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateDailyRatesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range or room type id."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Partner role is required."
           },
           "404": {
-            "description": "Room type not found or not owned."
+            "description": "Room type or rate plan not found."
           }
         },
         "security": [
@@ -586,16 +774,30 @@
         "parameters": [
           {
             "name": "folder",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
+              "example": "properties/123",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Presigned upload URL returned for the requested folder."
+            "description": "Presigned upload URL returned for the requested folder.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignedMediaUrlResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid media folder query."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
           },
           "403": {
             "description": "Partner role is required."
@@ -628,10 +830,23 @@
         },
         "responses": {
           "201": {
-            "description": "Booking created."
+            "description": "Booking created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid dates or no availability."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Customer role is required."
           }
         },
         "security": [
@@ -651,7 +866,23 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Returns bookings for the authenticated customer."
+            "description": "Returns bookings for the authenticated customer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Customer role is required."
           }
         },
         "security": [
@@ -681,7 +912,23 @@
         ],
         "responses": {
           "201": {
-            "description": "Booking cancelled and availability restored."
+            "description": "Booking cancelled and availability restored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelBookingResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Booking cannot be cancelled."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Customer role is required."
           },
           "404": {
             "description": "Booking not found."
@@ -724,10 +971,26 @@
         },
         "responses": {
           "201": {
-            "description": "Booking review created."
+            "description": "Booking review created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewIdResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Booking is not eligible for a review."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Customer role is required."
+          },
+          "404": {
+            "description": "Booking not found."
           }
         },
         "security": [
@@ -766,10 +1029,29 @@
         },
         "responses": {
           "201": {
-            "description": "Review submitted successfully."
+            "description": "Review submitted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Booking is not eligible for a review."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Booking does not belong to you."
+          },
+          "404": {
+            "description": "Booking not found."
+          },
+          "409": {
+            "description": "A review for this booking already exists."
           }
         },
         "security": [
@@ -851,6 +1133,82 @@
           "userType"
         ]
       },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "uuid": {
+            "type": "string",
+            "example": "8df77395-c5ff-48f5-80a0-676d7bbf8d52"
+          },
+          "email": {
+            "type": "string",
+            "example": "customer@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+84901234567"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Nguyen Van A"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "partner",
+              "admin"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "pending",
+              "deleted"
+            ]
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "example": "vi"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "uuid",
+          "email",
+          "fullName",
+          "userType",
+          "status",
+          "preferredLanguage",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -883,6 +1241,51 @@
           "password"
         ]
       },
+      "AuthUserSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "email": {
+            "type": "string",
+            "example": "customer@example.com"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "partner",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "userType"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUserSummaryResponseDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "user"
+        ]
+      },
       "RefreshTokenDto": {
         "type": "object",
         "properties": {
@@ -893,6 +1296,45 @@
         },
         "required": [
           "refreshToken"
+        ]
+      },
+      "RefreshResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken"
+        ]
+      },
+      "LogoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "Logged out successfully"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "example": null,
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "data"
         ]
       },
       "UpdateKycStatusDto": {
@@ -910,6 +1352,57 @@
           "status"
         ]
       },
+      "PartnerKycResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "userId": {
+            "type": "string",
+            "example": "1"
+          },
+          "businessName": {
+            "type": "string"
+          },
+          "businessType": {
+            "type": "string"
+          },
+          "kycStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "kycReviewerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "1"
+          },
+          "kycReviewedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "businessName",
+          "businessType",
+          "kycStatus",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "UpdatePropertyStatusDto": {
         "type": "object",
         "properties": {
@@ -925,6 +1418,706 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "PropertyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "partnerId": {
+            "type": "string",
+            "example": "1"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": [
+              "hotel",
+              "homestay",
+              "resort",
+              "apartment",
+              "villa",
+              "hostel"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "starRating": {
+            "type": "number",
+            "nullable": true
+          },
+          "avgRating": {
+            "type": "number"
+          },
+          "totalReviews": {
+            "type": "number"
+          },
+          "checkInTime": {
+            "type": "string",
+            "example": "14:00:00"
+          },
+          "checkOutTime": {
+            "type": "string",
+            "example": "12:00:00"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending_review",
+              "active",
+              "suspended",
+              "rejected"
+            ]
+          },
+          "reviewerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "1"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "propertyType",
+          "address",
+          "city",
+          "countryCode",
+          "latitude",
+          "longitude",
+          "avgRating",
+          "totalReviews",
+          "checkInTime",
+          "checkOutTime",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PropertySearchItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "property_type": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string",
+            "nullable": true
+          },
+          "country_code": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "star_rating": {
+            "type": "number",
+            "nullable": true
+          },
+          "avg_rating": {
+            "type": "number"
+          },
+          "total_reviews": {
+            "type": "number"
+          },
+          "min_nightly_price": {
+            "type": "number"
+          },
+          "min_total_price": {
+            "type": "number",
+            "nullable": true
+          },
+          "cover_image": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "property_type",
+          "address",
+          "city",
+          "country_code",
+          "latitude",
+          "longitude",
+          "avg_rating",
+          "total_reviews",
+          "min_nightly_price"
+        ]
+      },
+      "PaginationMetaResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "total_pages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "total_pages"
+        ]
+      },
+      "PaginatedPropertySearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertySearchItemResponseDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMetaResponseDto"
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ]
+      },
+      "MediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "virtual_tour"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "exterior",
+              "interior",
+              "room",
+              "bathroom",
+              "dining",
+              "pool",
+              "amenity",
+              "other"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "isCover": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mediaType",
+          "category",
+          "url",
+          "isCover",
+          "sortOrder",
+          "createdAt"
+        ]
+      },
+      "AmenityResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "iconCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category"
+        ]
+      },
+      "PropertyAmenityResponseDto": {
+        "type": "object",
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "example": "1"
+          },
+          "amenityId": {
+            "type": "string",
+            "example": "1"
+          },
+          "amenity": {
+            "$ref": "#/components/schemas/AmenityResponseDto"
+          }
+        },
+        "required": [
+          "propertyId",
+          "amenityId"
+        ]
+      },
+      "PropertyPolicyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyId": {
+            "type": "string",
+            "example": "1"
+          },
+          "cancellationType": {
+            "type": "string",
+            "enum": [
+              "free",
+              "flexible",
+              "moderate",
+              "strict",
+              "non_refundable"
+            ]
+          },
+          "freeCancelHours": {
+            "type": "number",
+            "nullable": true
+          },
+          "cancelPenaltyPercent": {
+            "type": "number"
+          },
+          "minStayNights": {
+            "type": "number"
+          },
+          "maxStayNights": {
+            "type": "number",
+            "nullable": true
+          },
+          "checkInFrom": {
+            "type": "string"
+          },
+          "checkInUntil": {
+            "type": "string"
+          },
+          "checkOutFrom": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkOutUntil": {
+            "type": "string"
+          },
+          "earlyCheckInAllowed": {
+            "type": "boolean"
+          },
+          "earlyCheckInFee": {
+            "type": "number",
+            "nullable": true
+          },
+          "lateCheckOutAllowed": {
+            "type": "boolean"
+          },
+          "lateCheckOutFee": {
+            "type": "number",
+            "nullable": true
+          },
+          "petsAllowed": {
+            "type": "boolean"
+          },
+          "smokingAllowed": {
+            "type": "boolean"
+          },
+          "childrenAllowed": {
+            "type": "boolean"
+          },
+          "noShowPenaltyType": {
+            "type": "string",
+            "enum": [
+              "full_amount",
+              "first_night",
+              "percent"
+            ]
+          },
+          "instantConfirmation": {
+            "type": "boolean"
+          },
+          "depositRequired": {
+            "type": "boolean"
+          },
+          "depositType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "percent",
+              "fixed"
+            ]
+          },
+          "depositValue": {
+            "type": "number",
+            "nullable": true
+          },
+          "breakfastIncluded": {
+            "type": "boolean"
+          },
+          "parkingType": {
+            "type": "string",
+            "enum": [
+              "free",
+              "paid",
+              "none"
+            ]
+          },
+          "partiesAllowed": {
+            "type": "boolean"
+          },
+          "quietHoursStart": {
+            "type": "string",
+            "nullable": true
+          },
+          "quietHoursEnd": {
+            "type": "string",
+            "nullable": true
+          },
+          "customRules": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "cancellationType",
+          "cancelPenaltyPercent",
+          "minStayNights",
+          "checkInFrom",
+          "checkInUntil",
+          "checkOutUntil",
+          "earlyCheckInAllowed",
+          "lateCheckOutAllowed",
+          "petsAllowed",
+          "smokingAllowed",
+          "childrenAllowed",
+          "noShowPenaltyType",
+          "instantConfirmation",
+          "depositRequired",
+          "breakfastIncluded",
+          "parkingType",
+          "partiesAllowed",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "RoomTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyId": {
+            "type": "string",
+            "example": "1"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaSqm": {
+            "type": "number",
+            "nullable": true
+          },
+          "maxOccupancy": {
+            "type": "number"
+          },
+          "totalRooms": {
+            "type": "number"
+          },
+          "basePrice": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "totalPrice": {
+            "type": "number",
+            "nullable": true
+          },
+          "minAvailableQty": {
+            "type": "number",
+            "nullable": true
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaResponseDto"
+            }
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmenityResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "name",
+          "maxOccupancy",
+          "totalRooms",
+          "basePrice",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PropertyDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "partnerId": {
+            "type": "string",
+            "example": "1"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": [
+              "hotel",
+              "homestay",
+              "resort",
+              "apartment",
+              "villa",
+              "hostel"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "starRating": {
+            "type": "number",
+            "nullable": true
+          },
+          "avgRating": {
+            "type": "number"
+          },
+          "totalReviews": {
+            "type": "number"
+          },
+          "checkInTime": {
+            "type": "string",
+            "example": "14:00:00"
+          },
+          "checkOutTime": {
+            "type": "string",
+            "example": "12:00:00"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending_review",
+              "active",
+              "suspended",
+              "rejected"
+            ]
+          },
+          "reviewerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "1"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaResponseDto"
+            }
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyAmenityResponseDto"
+            }
+          },
+          "policy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PropertyPolicyResponseDto"
+              }
+            ]
+          },
+          "roomTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomTypeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "propertyType",
+          "address",
+          "city",
+          "countryCode",
+          "latitude",
+          "longitude",
+          "avgRating",
+          "totalReviews",
+          "checkInTime",
+          "checkOutTime",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "media",
+          "amenities",
+          "roomTypes"
         ]
       },
       "CreatePropertyDto": {
@@ -1225,21 +2418,76 @@
           "endDate"
         ]
       },
+      "GenerateDailyRatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "roomTypeId": {
+            "type": "string",
+            "example": "1"
+          },
+          "ratePlanId": {
+            "type": "string",
+            "example": "1"
+          },
+          "requestedDates": {
+            "type": "number"
+          },
+          "insertedCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roomTypeId",
+          "ratePlanId",
+          "requestedDates",
+          "insertedCount"
+        ]
+      },
+      "PresignedMediaUrlResponseDto": {
+        "type": "object",
+        "properties": {
+          "cloudName": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "signature": {
+            "type": "string"
+          },
+          "folder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cloudName",
+          "apiKey",
+          "timestamp",
+          "signature",
+          "folder"
+        ]
+      },
       "CreateBookingDto": {
         "type": "object",
         "properties": {
           "propertyId": {
             "type": "number",
+            "minimum": 1,
             "example": 1,
             "description": "Property ID"
           },
           "roomTypeId": {
             "type": "number",
+            "minimum": 1,
             "example": 1,
             "description": "Room type ID"
           },
           "ratePlanId": {
             "type": "number",
+            "minimum": 1,
             "example": 1,
             "description": "Rate plan ID"
           },
@@ -1257,19 +2505,22 @@
           },
           "numAdults": {
             "type": "number",
+            "minimum": 1,
             "example": 2,
             "description": "Number of adults"
           },
           "numChildren": {
-            "type": "object",
-            "example": 0,
+            "type": "number",
             "default": 0,
+            "minimum": 0,
+            "example": 0,
             "description": "Number of children"
           },
           "roomsNeeded": {
-            "type": "object",
-            "example": 1,
+            "type": "number",
             "default": 1,
+            "minimum": 1,
+            "example": 1,
             "description": "Number of rooms needed"
           }
         },
@@ -1280,6 +2531,199 @@
           "checkInDate",
           "checkOutDate",
           "numAdults"
+        ]
+      },
+      "BookingPropertySummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city",
+          "address"
+        ]
+      },
+      "BookingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "bookingCode": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyId": {
+            "type": "string",
+            "example": "1"
+          },
+          "roomTypeId": {
+            "type": "string",
+            "example": "1"
+          },
+          "ratePlanId": {
+            "type": "string",
+            "example": "1"
+          },
+          "checkInDate": {
+            "type": "string",
+            "example": "2026-06-01"
+          },
+          "checkOutDate": {
+            "type": "string",
+            "example": "2026-06-03"
+          },
+          "numNights": {
+            "type": "number"
+          },
+          "numAdults": {
+            "type": "number"
+          },
+          "numChildren": {
+            "type": "number"
+          },
+          "subtotalAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "taxAmount": {
+            "type": "number"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "checked_in",
+              "checked_out",
+              "cancelled",
+              "no_show"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "partial",
+              "paid",
+              "refunded"
+            ]
+          },
+          "sourceChannel": {
+            "type": "string",
+            "enum": [
+              "web",
+              "mobile",
+              "ota",
+              "direct"
+            ]
+          },
+          "specialRequests": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "property": {
+            "$ref": "#/components/schemas/BookingPropertySummaryResponseDto"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "bookingCode",
+          "customerId",
+          "propertyId",
+          "roomTypeId",
+          "ratePlanId",
+          "checkInDate",
+          "checkOutDate",
+          "numNights",
+          "numAdults",
+          "numChildren",
+          "subtotalAmount",
+          "discountAmount",
+          "taxAmount",
+          "totalAmount",
+          "currency",
+          "status",
+          "paymentStatus",
+          "sourceChannel",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CancelBookingResponseDto": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string",
+            "example": "1"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "checked_in",
+              "checked_out",
+              "cancelled",
+              "no_show"
+            ]
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "penaltyPercent": {
+            "type": "number"
+          },
+          "penaltyAmount": {
+            "type": "number"
+          },
+          "refundAmount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "bookingId",
+          "status",
+          "totalAmount",
+          "penaltyPercent",
+          "penaltyAmount",
+          "refundAmount"
         ]
       },
       "BookingCreateReviewDto": {
@@ -1300,6 +2744,18 @@
           "overall_rating"
         ]
       },
+      "ReviewIdResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
       "CustomerCreateReviewDto": {
         "type": "object",
         "properties": {
@@ -1316,6 +2772,58 @@
         },
         "required": [
           "rating"
+        ]
+      },
+      "ReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "bookingId": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyId": {
+            "type": "string",
+            "example": "1"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "1"
+          },
+          "overallRating": {
+            "type": "number"
+          },
+          "content": {
+            "type": "string",
+            "nullable": true
+          },
+          "moderationStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "bookingId",
+          "propertyId",
+          "customerId",
+          "overallRating",
+          "moderationStatus",
+          "createdAt",
+          "updatedAt"
         ]
       }
     }
