@@ -63,7 +63,15 @@ Nếu cần generate lại Prisma Client:
 npx prisma generate
 ```
 
-### Bước 5: Chạy dự án
+### Bước 5: Chạy seed dữ liệu mẫu
+
+```bash
+npx prisma db seed
+```
+
+Lệnh này sẽ chạy file `prisma/seed.ts` theo cấu hình trong `package.json`.
+
+### Bước 6: Chạy dự án
 
 ```bash
 npm run start:dev
