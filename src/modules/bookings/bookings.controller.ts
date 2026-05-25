@@ -32,6 +32,7 @@ import { BookingCreateReviewDto } from './dto/create-review.dto';
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
+  // POST /bookings - Tao booking va khoa ton kho phong.
   @Post()
   @ApiOperation({ summary: 'Create a booking with locked room inventory' })
   @ApiCreatedResponse({
@@ -50,6 +51,7 @@ export class BookingsController {
     return BookingResponseDto.from(booking);
   }
 
+  // GET /bookings/me - Lay danh sach booking cua customer hien tai.
   @Get('me')
   @ApiOperation({ summary: 'List bookings for the current customer' })
   @ApiOkResponse({
@@ -66,6 +68,7 @@ export class BookingsController {
     return bookings.map(BookingResponseDto.from);
   }
 
+  // POST /bookings/:id/cancel - Huy booking va hoan lai phong trong.
   @Post(':id/cancel')
   @ApiOperation({ summary: 'Cancel a booking and restore availability' })
   @ApiParam({ name: 'id', example: 1 })
@@ -86,6 +89,7 @@ export class BookingsController {
     return CancelBookingResponseDto.from(response);
   }
 
+  // POST /bookings/:id/reviews - Tao review cho booking da checkout.
   @Post(':id/reviews')
   @ApiOperation({ summary: 'Review a checked-out booking' })
   @ApiParam({ name: 'id', example: 1 })

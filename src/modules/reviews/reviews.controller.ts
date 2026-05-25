@@ -26,6 +26,7 @@ import { ReviewsService } from './reviews.service';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  // POST /reviews/:bookingId - Tao review cho booking da hoan thanh.
   @Post(':bookingId')
   @ApiOperation({
     summary: 'Submit a post-stay review for a completed booking',

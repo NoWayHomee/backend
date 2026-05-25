@@ -34,6 +34,7 @@ import {
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  // POST /payments/checkout/:bookingId - Tao phien thanh toan cho booking.
   @UseGuards(JwtAuthGuard)
   @Post('checkout/:bookingId')
   @ApiBearerAuth()
@@ -53,6 +54,7 @@ export class PaymentsController {
     return this.paymentsService.checkout(bookingId, user.id);
   }
 
+  // POST /payments/webhook - Nhan thong bao webhook tu nha cung cap thanh toan.
   @Public()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
