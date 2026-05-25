@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -280,6 +281,21 @@ export class AuthService {
       message: 'Logged out successfully',
       data: null,
     };
+  }
+
+  async getMe(userId: string): Promise<SanitizedUserEntity> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: BigInt(userId),
+        deletedAt: null,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.excludePasswordHash(user);
   }
 
   private parseTokenBigInt(value: string): bigint {

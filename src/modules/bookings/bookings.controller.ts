@@ -51,6 +51,23 @@ export class BookingsController {
     return BookingResponseDto.from(booking);
   }
 
+  // GET /bookings/mine - Alias cho /me, tuong thich voi frontend mobile/web.
+  @Get('mine')
+  @ApiOperation({ summary: 'List bookings for the current customer (alias /mine)' })
+  @ApiOkResponse({
+    description: 'Returns bookings for the authenticated customer.',
+    type: [BookingResponseDto],
+  })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'Customer role is required.' })
+  async findByMine(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<BookingResponseDto[]> {
+    const bookings = await this.bookingsService.findMine(user);
+
+    return bookings.map(BookingResponseDto.from);
+  }
+
   // GET /bookings/me - Lay danh sach booking cua customer hien tai.
   @Get('me')
   @ApiOperation({ summary: 'List bookings for the current customer' })

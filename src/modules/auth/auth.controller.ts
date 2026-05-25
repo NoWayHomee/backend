@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Post,
   Req,
@@ -97,6 +98,22 @@ export class AuthController {
     const response = await this.authService.refresh(refreshTokenDto);
 
     return RefreshResponseDto.from(response);
+  }
+
+  // GET /auth/me - Lay thong tin user hien tai tu JWT payload.
+  @Get('me')
+  @ApiOperation({ summary: 'Get current authenticated user info' })
+  @ApiOkResponse({
+    description: 'Returns current user from JWT.',
+    type: UserResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async getMe(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<UserResponseDto> {
+    const userEntity = await this.authService.getMe(user.id);
+
+    return UserResponseDto.from(userEntity);
   }
 
   // POST /auth/logout - Dang xuat phien dang nhap hien tai.
