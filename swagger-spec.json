@@ -115,6 +115,31 @@
         ]
       }
     },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AuthController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns current user from JWT.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "summary": "Get current authenticated user info",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
@@ -426,6 +451,85 @@
         "summary": "Get public property detail by slug",
         "tags": [
           "Properties"
+        ]
+      }
+    },
+    "/api/public/rooms": {
+      "get": {
+        "operationId": "PublicController_searchRooms",
+        "parameters": [
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "description": "Filter by city",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by property type enum",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkIn",
+            "required": false,
+            "in": "query",
+            "description": "Check-in date ISO string",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkOut",
+            "required": false,
+            "in": "query",
+            "description": "Check-out date ISO string",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "required": false,
+            "in": "query",
+            "description": "Minimum base price",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "required": false,
+            "in": "query",
+            "description": "Maximum base price",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guests",
+            "required": false,
+            "in": "query",
+            "description": "Number of guests",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available properties."
+          }
+        },
+        "summary": "Public property/room search (alias for /properties/search)",
+        "tags": [
+          "Public"
         ]
       }
     },
@@ -814,6 +918,58 @@
         ]
       }
     },
+    "/api/partner/booking-report": {
+      "get": {
+        "operationId": "PartnerBookingsController_getBookingReport",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Start date ISO string (default: 30 days ago)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "End date ISO string (default: today)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking revenue report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingReportDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Partner role is required."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get booking revenue report for the partner",
+        "tags": [
+          "Partner"
+        ]
+      }
+    },
     "/api/bookings": {
       "post": {
         "operationId": "BookingsController_create",
@@ -855,6 +1011,42 @@
           }
         ],
         "summary": "Create a booking with locked room inventory",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/api/bookings/mine": {
+      "get": {
+        "operationId": "BookingsController_findByMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns bookings for the authenticated customer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Customer role is required."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List bookings for the current customer (alias /mine)",
         "tags": [
           "Bookings"
         ]
@@ -2469,6 +2661,10 @@
           "signature",
           "folder"
         ]
+      },
+      "BookingReportDto": {
+        "type": "object",
+        "properties": {}
       },
       "CreateBookingDto": {
         "type": "object",
