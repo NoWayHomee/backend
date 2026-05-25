@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/auth/register": {
+    "/api/auth/register": {
       "post": {
         "operationId": "AuthController_register",
         "parameters": [],
@@ -39,7 +39,7 @@
         ]
       }
     },
-    "/auth/login": {
+    "/api/auth/login": {
       "post": {
         "operationId": "AuthController_login",
         "parameters": [],
@@ -77,7 +77,7 @@
         ]
       }
     },
-    "/auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "operationId": "AuthController_refresh",
         "parameters": [],
@@ -115,7 +115,7 @@
         ]
       }
     },
-    "/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
         "parameters": [],
@@ -140,7 +140,7 @@
         ]
       }
     },
-    "/admin/partners/{partnerProfileId}/kyc": {
+    "/api/admin/partners/{partnerProfileId}/kyc": {
       "patch": {
         "operationId": "AdminController_updateKycStatus",
         "parameters": [
@@ -198,7 +198,7 @@
         ]
       }
     },
-    "/admin/properties/{propertyId}/status": {
+    "/api/admin/properties/{propertyId}/status": {
       "patch": {
         "operationId": "AdminController_updatePropertyStatus",
         "parameters": [
@@ -256,7 +256,7 @@
         ]
       }
     },
-    "/properties/search": {
+    "/api/properties/search": {
       "get": {
         "operationId": "PropertiesController_search",
         "parameters": [
@@ -374,7 +374,7 @@
         ]
       }
     },
-    "/properties/{slug}": {
+    "/api/properties/{slug}": {
       "get": {
         "operationId": "PropertiesController_findBySlug",
         "parameters": [
@@ -429,7 +429,7 @@
         ]
       }
     },
-    "/partner/properties": {
+    "/api/partner/properties": {
       "post": {
         "operationId": "PartnerPropertiesController_createProperty",
         "parameters": [],
@@ -475,7 +475,7 @@
         ]
       }
     },
-    "/partner/properties/{id}": {
+    "/api/partner/properties/{id}": {
       "patch": {
         "operationId": "PartnerPropertiesController_updateProperty",
         "parameters": [
@@ -533,7 +533,7 @@
         ]
       }
     },
-    "/partner/properties/{id}/policies": {
+    "/api/partner/properties/{id}/policies": {
       "post": {
         "operationId": "PartnerPropertiesController_upsertPolicies",
         "parameters": [
@@ -591,7 +591,7 @@
         ]
       }
     },
-    "/partner/properties/{id}/amenities": {
+    "/api/partner/properties/{id}/amenities": {
       "post": {
         "operationId": "PartnerPropertiesController_updateAmenities",
         "parameters": [
@@ -652,7 +652,7 @@
         ]
       }
     },
-    "/partner/properties/{id}/room-types": {
+    "/api/partner/properties/{id}/room-types": {
       "post": {
         "operationId": "PartnerPropertiesController_createRoomType",
         "parameters": [
@@ -710,7 +710,7 @@
         ]
       }
     },
-    "/partner/room-types/{roomTypeId}/daily-rates/generate": {
+    "/api/partner/room-types/{roomTypeId}/daily-rates/generate": {
       "post": {
         "operationId": "PartnerRoomTypesController_generateDailyRates",
         "parameters": [
@@ -768,7 +768,7 @@
         ]
       }
     },
-    "/partner/media/presigned-url": {
+    "/api/partner/media/presigned-url": {
       "get": {
         "operationId": "MediaController_getPresignedUrl",
         "parameters": [
@@ -814,7 +814,7 @@
         ]
       }
     },
-    "/bookings": {
+    "/api/bookings": {
       "post": {
         "operationId": "BookingsController_create",
         "parameters": [],
@@ -860,7 +860,7 @@
         ]
       }
     },
-    "/bookings/me": {
+    "/api/bookings/me": {
       "get": {
         "operationId": "BookingsController_findMine",
         "parameters": [],
@@ -896,7 +896,7 @@
         ]
       }
     },
-    "/bookings/{id}/cancel": {
+    "/api/bookings/{id}/cancel": {
       "post": {
         "operationId": "BookingsController_cancel",
         "parameters": [
@@ -945,7 +945,7 @@
         ]
       }
     },
-    "/bookings/{id}/reviews": {
+    "/api/bookings/{id}/reviews": {
       "post": {
         "operationId": "BookingsController_createReview",
         "parameters": [
@@ -1004,7 +1004,7 @@
         ]
       }
     },
-    "/reviews/{bookingId}": {
+    "/api/reviews/{bookingId}": {
       "post": {
         "operationId": "ReviewsController_createReview",
         "parameters": [

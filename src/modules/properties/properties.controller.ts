@@ -22,6 +22,7 @@ import { PropertiesService } from './properties.service';
 export class PropertiesController {
   constructor(private readonly propertiesService: PropertiesService) {}
 
+  // GET /properties/search - Tim kiem property cong khai theo bo loc.
   @Public()
   @Get('search')
   @UseInterceptors(CacheInterceptor)
@@ -40,6 +41,7 @@ export class PropertiesController {
     return PaginatedPropertySearchResponseDto.from(response);
   }
 
+  // GET /properties/:slug - Lay chi tiet property cong khai theo slug.
   @Public()
   @Get(':slug')
   @ApiOperation({ summary: 'Get public property detail by slug' })

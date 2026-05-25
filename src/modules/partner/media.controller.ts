@@ -24,6 +24,7 @@ import { MediaService } from './media.service';
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
+  // GET /partner/media/presigned-url - Lay URL upload media da ky san.
   @Get('presigned-url')
   @ApiOperation({ summary: 'Get Cloudinary presigned upload URL' })
   @ApiOkResponse({

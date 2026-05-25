@@ -45,6 +45,7 @@ import { PartnerService } from './partner.service';
 export class PartnerPropertiesController {
   constructor(private readonly partnerService: PartnerService) {}
 
+  // POST /partner/properties - Tao property dang draft cho partner hien tai.
   @Post()
   @ApiOperation({ summary: 'Create a draft property for the current partner' })
   @ApiCreatedResponse({
@@ -63,6 +64,7 @@ export class PartnerPropertiesController {
     return PropertyResponseDto.from(property);
   }
 
+  // PATCH /partner/properties/:id - Cap nhat thong tin property thuoc partner.
   @Patch(':id')
   @ApiOperation({ summary: 'Update owned property details' })
   @ApiOkResponse({
@@ -88,6 +90,7 @@ export class PartnerPropertiesController {
     return PropertyResponseDto.from(property);
   }
 
+  // POST /partner/properties/:id/policies - Tao hoac cap nhat chinh sach cua property.
   @Post(':id/policies')
   @ApiOperation({ summary: 'Create or update owned property policies' })
   @ApiCreatedResponse({
@@ -113,6 +116,7 @@ export class PartnerPropertiesController {
     return PropertyPolicyResponseDto.from(policy);
   }
 
+  // POST /partner/properties/:id/amenities - Thay the danh sach tien ich cua property.
   @Post(':id/amenities')
   @ApiOperation({ summary: 'Replace amenities for an owned property' })
   @ApiCreatedResponse({
@@ -138,6 +142,7 @@ export class PartnerPropertiesController {
     return amenities.map(PropertyAmenityResponseDto.from);
   }
 
+  // POST /partner/properties/:id/room-types - Tao loai phong cho property.
   @Post(':id/room-types')
   @ApiOperation({ summary: 'Create a room type for an owned property' })
   @ApiCreatedResponse({

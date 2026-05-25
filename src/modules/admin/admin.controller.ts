@@ -29,6 +29,7 @@ import { UpdatePropertyStatusDto } from './dto/update-property-status.dto';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  // PATCH /admin/partners/:partnerProfileId/kyc - Duyet hoac tu choi ho so KYC cua partner.
   @Patch('partners/:partnerProfileId/kyc')
   @ApiOperation({ summary: 'Approve or reject a partner KYC application' })
   @ApiOkResponse({
@@ -53,6 +54,7 @@ export class AdminController {
     return PartnerKycResponseDto.from(partner);
   }
 
+  // PATCH /admin/properties/:propertyId/status - Cap nhat trang thai kiem duyet property.
   @Patch('properties/:propertyId/status')
   @ApiOperation({ summary: 'Approve, reject, or suspend a property listing' })
   @ApiOkResponse({

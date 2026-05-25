@@ -38,6 +38,7 @@ import type { AuthenticatedUser } from './strategies/jwt.strategy';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // POST /auth/register - Dang ky tai khoan customer moi.
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a customer account' })
@@ -54,6 +55,7 @@ export class AuthController {
     return UserResponseDto.from(user);
   }
 
+  // POST /auth/login - Dang nhap bang email va mat khau.
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
@@ -76,6 +78,7 @@ export class AuthController {
     return LoginResponseDto.from(response);
   }
 
+  // POST /auth/refresh - Doi refresh token va cap access token moi.
   @Public()
   @Post('refresh')
   @ApiOperation({
@@ -96,6 +99,7 @@ export class AuthController {
     return RefreshResponseDto.from(response);
   }
 
+  // POST /auth/logout - Dang xuat phien dang nhap hien tai.
   @Post('logout')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)

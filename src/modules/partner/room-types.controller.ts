@@ -28,6 +28,7 @@ import { PartnerService } from './partner.service';
 export class PartnerRoomTypesController {
   constructor(private readonly partnerService: PartnerService) {}
 
+  // POST /partner/room-types/:roomTypeId/daily-rates/generate - Tao daily inventory/rate cho room type.
   @Post(':roomTypeId/daily-rates/generate')
   @ApiOperation({ summary: 'Generate daily inventory for a room type' })
   @ApiCreatedResponse({
