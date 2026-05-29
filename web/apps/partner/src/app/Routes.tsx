@@ -12,6 +12,7 @@ import { RoomDetailModal } from "../features/rooms/components/modals/RoomDetailM
 import { Login } from "../features/auth/components/Login";
 import { API_PATHS } from "../constants/apiPaths";
 import { DashboardTab } from "../features/rooms/components/tabs/DashboardTab";
+import { AccountSettingsPage } from "../features/account/components/AccountSettingsPage";
 
 function RoomsPage({ onDetail }: { onDetail: (room: Room) => void }) {
   const [viewingRoom, setViewingRoom] = useState<Room | null>(null);
@@ -102,6 +103,7 @@ export function AppRoutes({ user, onLogin, onLogout }: AppRoutesProps) {
         <Route path="/create" element={<CreateRoomPage />} />
         <Route path="/edit/:id" element={<EditRoomPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/account" element={<AccountSettingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

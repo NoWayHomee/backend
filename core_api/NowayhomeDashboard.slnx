@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="core_api.Tests/core_api.Tests.csproj" />
-  <Project Path="core_api.csproj" />
-</Solution>

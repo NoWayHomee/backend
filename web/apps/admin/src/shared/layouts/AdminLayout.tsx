@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  UserCog,
   X
 } from "lucide-react";
 import { useState } from "react";
@@ -27,6 +28,7 @@ export function AdminLayout({ user, onLogout, notificationCount }: { user: User;
     { path: "/rooms", label: "Khách sạn", icon: Hotel },
     { path: "/admins", label: "Quản trị viên", icon: ShieldCheck },
     { path: "/notifications", label: "Thông báo", icon: Bell, count: notificationCount },
+    { path: "/account", label: "Tài khoản", icon: UserCog },
   ];
 
   return (
@@ -78,12 +80,16 @@ export function AdminLayout({ user, onLogout, notificationCount }: { user: User;
 
           <div className="p-3 border-t">
             <div className="flex items-center gap-3 p-2 rounded-lg bg-accent/50 mb-4">
-              <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                {user.fullName.charAt(0)}
-              </div>
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="size-8 rounded-full object-cover" />
+              ) : (
+                <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                  {user.fullName.charAt(0)}
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{user.fullName}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.role}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.title || (user.isSuperAdmin ? "Admin tổng" : user.role)}</p>
               </div>
             </div>
             <Button variant="outline" className="w-full gap-2 justify-start" onClick={onLogout}>

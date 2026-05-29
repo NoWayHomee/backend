@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "../../../../shared/components/ui";
-import { fetchBookingReport, markBookingPaid, cancelBooking, rejectCancelBooking } from "../../../../api/bookingsApi";
+import { fetchBookingReport, markBookingPaid, cancelBooking } from "../../../../api/bookingsApi";
 import { approveRoom } from "../../../../api/roomsApi";
 
 type BookingItem = {
@@ -31,7 +31,6 @@ type BookingItem = {
   propertyStatus?: string | null;
   propertyIsArchived?: boolean;
   propertyArchivedLabel?: string | null;
-  cancellationReason?: string | null;
 };
 
 type HotelReport = {
@@ -73,9 +72,6 @@ function toDateOnly(date: Date) {
 }
 
 function belongsToUpcomingTab(booking: BookingItem) {
-  const isPendingCancel = booking.cancellationReason && booking.cancellationReason.startsWith("PENDING_CANCEL");
-  if (isPendingCancel) return true;
-
   return (
     (booking.isFutureStay || booking.isCurrentStay || booking.status === "pending") &&
     !booking.isCompleted &&
@@ -216,8 +212,14 @@ export function BookingsTab() {
     setErr("");
     try {
       const result = await fetchBookingReport();
-      bookingReportCache = result.hotels || [];
-      setHotels(bookingReportCache);
+      const hotels = result.hotels || [];
+      bookingReportCache = hotels;
+      setHotels(hotels);
+      setDetail((current) =>
+        current
+          ? hotels.find((hotel: HotelReport) => hotel.propertyId === current.propertyId) || current
+          : current
+      );
     } catch (error: any) {
       setErr(error.message);
     } finally {
@@ -245,11 +247,6 @@ export function BookingsTab() {
       setHotels(bookingReportCache);
     }
     load().catch(() => {});
-
-    const interval = setInterval(() => {
-      load().catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const filtered = useMemo(() => {
@@ -330,19 +327,9 @@ export function BookingsTab() {
 
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">Quản lý đặt phòng</h2>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Theo dõi lưu trú, đơn đặt phòng, doanh thu và hoa hồng của hệ thống.</p>
-        </div>
-        <button
-          onClick={() => load()}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition-colors shadow-sm text-slate-700 disabled:opacity-50"
-        >
-          <svg className={`size-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" /></svg>
-          Đồng bộ
-        </button>
+      <div>
+        <h2 className="text-lg font-bold tracking-tight text-slate-950">Quản lý đặt phòng</h2>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">Theo dõi lưu trú, đơn đặt phòng, doanh thu và hoa hồng của hệ thống.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
@@ -400,12 +387,12 @@ export function BookingsTab() {
       </div>
 
       <div className="bg-card border rounded-lg overflow-hidden max-h-[70vh] overflow-y-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[980px] text-sm">
           <thead className="bg-muted/50 text-left sticky top-0 z-10">
             <tr>
               <th className="px-4 py-3 font-bold">Khách sạn</th>
               <th className="px-4 py-3 font-bold">Đối tác</th>
-              <th className="px-4 py-3 font-bold text-center">Lưu trú</th>
+              <th className="w-[110px] px-4 py-3 font-bold text-center">Lưu trú</th>
               <th className="px-4 py-3 font-bold text-center">Số đơn</th>
               <th className="px-4 py-3 font-bold">Doanh thu</th>
               <th className="px-4 py-3 font-bold">Hoa hồng</th>
@@ -445,9 +432,9 @@ export function BookingsTab() {
                   <div className="font-medium text-xs text-slate-800">{hotel.partnerHotelName || "-"}</div>
                   <div className="text-[10px] text-slate-500">{hotel.partnerEmail || "-"}</div>
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="w-[110px] px-4 py-3 text-center">
                   {hotel.currentStayCount > 0 ? (
-                    <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">{hotel.currentStayCount} đang ở</span>
+                    <span className="inline-flex min-w-[76px] items-center justify-center whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-bold leading-5 text-blue-700">{hotel.currentStayCount} đang ở</span>
                   ) : (
                     <span className="text-slate-300">-</span>
                   )}
@@ -581,10 +568,7 @@ function BookingDetailModal({ hotel, onClose, onRefresh, onNavigateToRoom }: { h
                     <div className="text-[10px] text-muted-foreground">{booking.customerEmail}</div>
                   </td>
                   <td className="p-4 text-xs font-medium">
-                    {booking.bookingCode === "BKMOMZT2FUAB17A6" ? "Deluxe Room" : (
-                      booking.priceLabel || 
-                      "-"
-                    )}
+                    {booking.priceLabel || "-"}
                   </td>
                   <td className="p-4 text-center">
                     <div className="font-bold text-xs">{fmtDate(booking.checkInDate)} - {fmtDate(booking.checkOutDate)}</div>
@@ -627,7 +611,6 @@ function SingleBookingDetailModal({ booking, onClose, onRefresh }: { booking: Bo
   const [loading, setLoading] = useState(false);
   const isCancelled = booking.status === 'cancelled';
   const isPaidOnline = booking.paymentStatus === 'paid';
-  const isPendingCancel = booking.cancellationReason && booking.cancellationReason.startsWith("PENDING_CANCEL");
   
   let displayPaymentStatus = '';
   let statusColor = 'text-amber-600';
@@ -656,8 +639,6 @@ function SingleBookingDetailModal({ booking, onClose, onRefresh }: { booking: Bo
         await markBookingPaid(booking.id);
       } else if (action === 'cancel') {
         await cancelBooking(booking.id);
-      } else if (action === 'reject_cancel') {
-        await rejectCancelBooking(booking.id);
       }
       onRefresh();
       onClose();
@@ -684,15 +665,6 @@ function SingleBookingDetailModal({ booking, onClose, onRefresh }: { booking: Bo
         </div>
         
         <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
-          {isPendingCancel && (
-            <div className="bg-amber-50 border border-amber-200 rounded p-4 text-sm text-amber-900 space-y-1 animate-in fade-in duration-200">
-              <div className="font-bold flex items-center gap-1.5 text-amber-800">
-                <svg className="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                Khách hàng yêu cầu hủy đặt phòng
-              </div>
-              <div>Lý do: <span className="italic font-medium">"{booking.cancellationReason?.replace('PENDING_CANCEL:', '').trim()}"</span></div>
-            </div>
-          )}
           <div className={`space-y-5 ${isCancelled ? 'opacity-60' : ''}`}>
             <section className="space-y-2">
               <div className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Thông tin khách hàng</div>
@@ -708,12 +680,7 @@ function SingleBookingDetailModal({ booking, onClose, onRefresh }: { booking: Bo
               <div className="grid grid-cols-2 gap-px bg-border border rounded overflow-hidden">
                 <div className="bg-card p-3">
                   <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Loại phòng</div>
-                  <div className="font-bold text-sm">
-                    {booking.bookingCode === "BKMOMZT2FUAB17A6" ? "Deluxe Room" : (
-                      booking.priceLabel || 
-                      "Chưa xác định"
-                    )}
-                  </div>
+                  <div className="font-bold text-sm">{booking.priceLabel || "Chưa xác định"}</div>
                 </div>
                 <div className="bg-card p-3">
                   <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Số đêm</div>
@@ -777,43 +744,22 @@ function SingleBookingDetailModal({ booking, onClose, onRefresh }: { booking: Bo
             <section className="space-y-2">
               <div className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Hành động Admin</div>
               <div className="grid grid-cols-2 gap-2">
-                {isPendingCancel ? (
-                  <>
-                    <button 
-                      disabled={loading}
-                      onClick={() => handleAction('cancel')}
-                      className="py-2 text-xs font-bold border rounded bg-red-600 hover:bg-red-700 text-white transition-colors"
-                    >
-                      Duyệt hủy
-                    </button>
-                    <button 
-                      disabled={loading}
-                      onClick={() => handleAction('reject_cancel')}
-                      className="py-2 text-xs font-bold border rounded hover:bg-slate-50 text-slate-700 border-slate-300 transition-colors"
-                    >
-                      Từ chối hủy
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {!isPaidOnline && (
-                      <button 
-                        disabled={loading}
-                        onClick={() => handleAction('confirm_payment')}
-                        className="py-2 text-xs font-bold border rounded hover:bg-green-50 text-green-700 border-green-200 transition-colors"
-                      >
-                        Xác nhận thanh toán
-                      </button>
-                    )}
-                    <button 
-                      disabled={loading}
-                      onClick={() => handleAction('cancel')}
-                      className="py-2 text-xs font-bold border rounded hover:bg-red-50 text-red-700 border-red-200 transition-colors"
-                    >
-                      Hủy đơn hàng
-                    </button>
-                  </>
+                {!isPaidOnline && (
+                  <button 
+                    disabled={loading}
+                    onClick={() => handleAction('confirm_payment')}
+                    className="py-2 text-xs font-bold border rounded hover:bg-green-50 text-green-700 border-green-200 transition-colors"
+                  >
+                    Xác nhận thanh toán
+                  </button>
                 )}
+                <button 
+                  disabled={loading}
+                  onClick={() => handleAction('cancel')}
+                  className="py-2 text-xs font-bold border rounded hover:bg-red-50 text-red-700 border-red-200 transition-colors"
+                >
+                  Hủy đơn hàng
+                </button>
               </div>
             </section>
           )}

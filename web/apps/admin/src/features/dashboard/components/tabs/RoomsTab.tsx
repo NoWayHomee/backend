@@ -366,7 +366,9 @@ export function RoomsTab({ initialFilter = "pending" }: { initialFilter?: string
                           <button onClick={() => setReject({ id: room.id, requestId: room.pendingRequest?.id, reason: "" })} className="px-2 py-1 text-xs rounded bg-destructive text-destructive-foreground font-medium hover:opacity-90">Từ chối</button>
                         </>
                       )}
-                      <button onClick={() => removeRoom(room)} disabled={isArchivedRoom(room)} className="px-2 py-1 text-xs rounded bg-destructive/10 text-destructive hover:bg-destructive hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">Ngừng hoạt động</button>
+                      {filter !== "pending" && (
+                        <button onClick={() => removeRoom(room)} disabled={isArchivedRoom(room)} className="px-2 py-1 text-xs rounded bg-destructive/10 text-destructive hover:bg-destructive hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">Ngừng hoạt động</button>
+                      )}
                     </td>
                   </tr>
                 );

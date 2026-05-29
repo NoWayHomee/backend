@@ -22,10 +22,10 @@ import {
   RefreshResponse,
   SafeUser,
 } from './auth.service';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
 
 @ApiTags('Auth')
@@ -86,20 +86,25 @@ export class AuthController {
   }
 
   @Public()
-  @Post('forgot-password')
-  @ApiOperation({
-    summary: 'Request password reset OTP (Mock)',
-  })
-  @ApiBody({ type: ForgotPasswordDto })
+  @Post('google')
+  @ApiOperation({ summary: 'Login or register via Google Identity Services (GIS)' })
+  @ApiBody({ type: GoogleLoginDto })
   @ApiResponse({
-    status: 200,
-    description: 'OTP sent successfully.',
+    status: 201,
+    description: 'Login via Google successful, tokens and user info returned.',
   })
-  async forgotPassword(
-    @Body() dto: ForgotPasswordDto,
-  ) {
-    // Giả lập gửi OTP thành công
-    return { success: true, message: 'OTP sent to email', email: dto.email };
+  @ApiResponse({ status: 401, description: 'Invalid Google credential.' })
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginResponse> {
+    const result = await this.authService.googleLogin(dto.credential, {
+      ipAddress: request.ip,
+      userAgent: request.get('user-agent'),
+    });
+    this.setSessionCookies(response, result.accessToken, result.user.userType);
+    return result;
   }
 
   @Post('logout')
@@ -160,6 +165,9 @@ export class AuthController {
       phone: user.phone,
       role: user.userType,
       status: user.status,
+      avatarUrl: user.avatarUrl,
+      isSuperAdmin: this.authService.isSuperAdminEmail(user.email),
+      title: this.authService.isSuperAdminEmail(user.email) ? 'Admin tổng' : 'Quản trị viên',
     };
   }
 }

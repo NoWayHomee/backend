@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   booking_status_enum,
   kyc_status_enum,
@@ -15,6 +17,7 @@ import {
   user_type_enum,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { v2 as cloudinary } from 'cloudinary';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -35,7 +38,160 @@ const DEFAULT_IMAGE =
 
 @Injectable()
 export class CompatService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) { }
+
+  async accountOverview(user: AuthenticatedUser) {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: BigInt(user.id) },
+      include: {
+        socialAccounts: true,
+        partnerProfile: {
+          include: {
+            properties: {
+              where: { deletedAt: null },
+              orderBy: { createdAt: 'desc' },
+              take: 3,
+            },
+          },
+        },
+      },
+    });
+    if (!dbUser) throw new NotFoundException('Khong tim thay tai khoan');
+
+    const sessions = await this.prisma.userSession.findMany({
+      where: {
+        userId: dbUser.id,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: [{ lastActiveAt: 'desc' }, { createdAt: 'desc' }],
+      take: 5,
+    });
+
+    const primaryProperty = dbUser.partnerProfile?.properties[0] ?? null;
+    const isPartner = dbUser.userType === user_type_enum.partner;
+    const isAdmin = dbUser.userType === user_type_enum.admin;
+    const isSuperAdmin = this.isSuperAdminEmail(dbUser.email);
+
+    return {
+      profile: {
+        id: Number(dbUser.id),
+        email: dbUser.email,
+        fullName: dbUser.fullName,
+        phone: dbUser.phone,
+        avatarUrl: dbUser.avatarUrl,
+        role: dbUser.userType,
+        title: isSuperAdmin ? 'Admin tổng' : isAdmin ? 'Quản trị viên' : 'Đối tác',
+        isSuperAdmin,
+        status: dbUser.status,
+        preferredLanguage: dbUser.preferredLanguage?.trim() || 'vi',
+        timezone: 'Asia/Ho_Chi_Minh',
+        emailVerifiedAt: dbUser.emailVerifiedAt,
+        lastLoginAt: dbUser.lastLoginAt,
+        createdAt: dbUser.createdAt,
+      },
+      security: {
+        googleLinked: dbUser.socialAccounts.some((item) => item.provider === 'google'),
+        twoFactorEnabled: false,
+        sessions: sessions.map((session) => ({
+          id: Number(session.id),
+          deviceName: session.deviceName || this.describeDevice(session.userAgent),
+          deviceType: session.deviceType,
+          ipAddress: session.ipAddress,
+          userAgent: session.userAgent,
+          lastActiveAt: session.lastActiveAt || session.createdAt,
+          expiresAt: session.expiresAt,
+        })),
+      },
+      business: isPartner && dbUser.partnerProfile ? {
+        businessName: dbUser.partnerProfile.businessName,
+        businessType: dbUser.partnerProfile.businessType,
+        kycStatus: dbUser.partnerProfile.kycStatus,
+        taxCode: dbUser.partnerProfile.taxCode,
+        bankAccountName: dbUser.partnerProfile.bankAccountName,
+        bankAccountNumber: dbUser.partnerProfile.bankAccountNumber,
+        bankName: dbUser.partnerProfile.bankName,
+        commissionTier: dbUser.partnerProfile.commissionTier,
+        hotelName: primaryProperty?.name ?? dbUser.partnerProfile.businessName,
+        address: primaryProperty?.address ?? null,
+        city: primaryProperty?.city ?? null,
+        hotelEmail: dbUser.email,
+        hotline: dbUser.phone,
+        propertyCount: dbUser.partnerProfile.properties.length,
+      } : null,
+      permissions: this.accountPermissions(isAdmin, isPartner),
+      notifications: [
+        { key: 'newBooking', label: 'Nhận thông báo khi có khách đặt phòng mới', enabled: true },
+        { key: 'cancelBooking', label: 'Nhận thông báo khi khách hủy phòng', enabled: true },
+        { key: 'monthlyReport', label: 'Nhận báo cáo doanh thu hàng tháng', enabled: isPartner },
+      ],
+    };
+  }
+
+  getAvatarUploadUrl(user: AuthenticatedUser) {
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME') ?? '';
+    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY') ?? '';
+    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET') ?? '';
+    if (!cloudName || !apiKey || !apiSecret) {
+      throw new BadRequestException('Cloudinary chua duoc cau hinh');
+    }
+
+    const folder = `nowayhome/avatars/${user.userType}`;
+    const timestamp = Math.floor(Date.now() / 1000);
+    cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+    const signature = cloudinary.utils.api_sign_request({ folder, timestamp }, apiSecret);
+
+    return { signature, timestamp, cloudName, apiKey, folder };
+  }
+
+  async updateAccountProfile(user: AuthenticatedUser, body: AnyBody) {
+    const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : '';
+    const phone = typeof body.phone === 'string' ? body.phone.trim() : undefined;
+    const preferredLanguage = typeof body.preferredLanguage === 'string'
+      ? body.preferredLanguage.trim().slice(0, 5)
+      : undefined;
+    const avatarUrl = typeof body.avatarUrl === 'string' ? body.avatarUrl.trim() : undefined;
+
+    if (!fullName) throw new BadRequestException('Ho ten khong duoc de trong');
+
+    if (phone) {
+      const duplicatedPhone = await this.prisma.user.findFirst({
+        where: {
+          phone,
+          id: { not: BigInt(user.id) },
+          deletedAt: null,
+        },
+      });
+      if (duplicatedPhone) throw new ConflictException('So dien thoai da duoc su dung');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: BigInt(user.id) },
+      data: {
+        fullName,
+        phone: phone || null,
+        ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl || null } : {}),
+        ...(preferredLanguage ? { preferredLanguage } : {}),
+      },
+    });
+
+    return {
+      user: {
+        id: Number(updated.id),
+        email: updated.email,
+        fullName: updated.fullName,
+        phone: updated.phone,
+        avatarUrl: updated.avatarUrl,
+        role: updated.userType,
+        title: this.isSuperAdminEmail(updated.email) ? 'Admin tổng' : 'Quản trị viên',
+        isSuperAdmin: this.isSuperAdminEmail(updated.email),
+        status: updated.status,
+      },
+    };
+  }
 
   async searchRooms(query: Record<string, string>) {
     const where: Prisma.PropertyWhereInput = {
@@ -367,21 +523,56 @@ export class CompatService {
         id: admin.id,
         email: admin.email,
         fullName: admin.fullName,
+        isSuperAdmin: this.isSuperAdminEmail(admin.email),
+        loginMethods: [admin.passwordHash ? 'password' : null, 'google'].filter(Boolean),
         createdAt: admin.createdAt,
       })),
     };
   }
 
   async createAdmin(body: AnyBody) {
-    if (!body.email || !body.password || !body.fullName) {
+    if (!body.email || !body.fullName) {
       throw new BadRequestException('Thieu thong tin');
     }
-    const passwordHash = await bcrypt.hash(this.text(body.password), 10);
-    await this.prisma.user.create({
-      data: {
-        email: this.text(body.email),
+    const email = this.text(body.email).trim().toLowerCase();
+    const password = this.text(body.password).trim();
+    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+    await this.prisma.user.upsert({
+      where: { email },
+      update: {
+        fullName: this.text(body.fullName),
+        ...(passwordHash ? { passwordHash } : {}),
+        userType: user_type_enum.admin,
+        status: user_status_enum.active,
+        deletedAt: null,
+      },
+      create: {
+        email,
         fullName: this.text(body.fullName),
         passwordHash,
+        userType: user_type_enum.admin,
+        status: user_status_enum.active,
+      },
+    });
+    return { ok: true };
+  }
+
+  async createGoogleAdmin(body: AnyBody) {
+    if (!body.email) throw new BadRequestException('Thieu email');
+    const email = this.text(body.email).trim().toLowerCase();
+    const fullName = this.text(body.fullName, email.split('@')[0]).trim();
+    await this.prisma.user.upsert({
+      where: { email },
+      update: {
+        fullName,
+        userType: user_type_enum.admin,
+        status: user_status_enum.active,
+        deletedAt: null,
+      },
+      create: {
+        email,
+        fullName,
+        passwordHash: null,
         userType: user_type_enum.admin,
         status: user_status_enum.active,
       },
@@ -660,106 +851,6 @@ export class CompatService {
     return { ok: true };
   }
 
-  async adminCancelBooking(id: string) {
-    const bookingId = this.parseId(id, 'Ma booking khong hop le');
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: {
-        property: {
-          include: {
-            policy: true,
-          },
-        },
-      },
-    });
-
-    if (!booking) {
-      throw new NotFoundException('Khong tim thay dat phong');
-    }
-
-    if (
-      booking.status === booking_status_enum.cancelled ||
-      booking.status === booking_status_enum.checked_out
-    ) {
-      throw new BadRequestException('Booking da bi huy hoac check-out');
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id: bookingId },
-        data: {
-          status: booking_status_enum.cancelled,
-          cancelledAt: new Date(),
-          cancellationReason: booking.cancellationReason?.startsWith('PENDING_CANCEL')
-            ? `Yêu cầu hủy được duyệt: ${booking.cancellationReason.replace('PENDING_CANCEL:', '').trim()}`
-            : 'Admin huy don hang',
-        },
-      });
-
-      // Restore availability
-      const inventoryRows = await tx.$queryRaw<Array<{ ratePlanId: bigint; roomsCount: bigint }>>`
-        SELECT
-          rate_plan_id AS "ratePlanId",
-          COUNT(*)::bigint AS "roomsCount"
-        FROM booking_rooms
-        WHERE booking_id = ${booking.id}
-        GROUP BY rate_plan_id
-      `;
-
-      for (const inventoryRow of inventoryRows) {
-        await tx.dailyRate.updateMany({
-          where: {
-            ratePlanId: inventoryRow.ratePlanId,
-            date: {
-              gte: booking.checkInDate,
-              lt: booking.checkOutDate,
-            },
-          },
-          data: {
-            availableQty: {
-              increment: Number(inventoryRow.roomsCount),
-            },
-          },
-        });
-      }
-    });
-
-    return { ok: true };
-  }
-
-  async adminMarkBookingPaid(id: string) {
-    const bookingId = this.parseId(id, 'Ma booking khong hop le');
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
-    if (!booking) throw new NotFoundException('Khong tim thay dat phong');
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        paymentStatus: payment_status_enum.paid,
-        status: booking_status_enum.confirmed,
-      },
-    });
-    return { ok: true };
-  }
-
-  async adminRejectBookingCancel(id: string) {
-    const bookingId = this.parseId(id, 'Ma booking khong hop le');
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
-    if (!booking) throw new NotFoundException('Khong tim thay dat phong');
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        cancellationReason: booking.cancellationReason?.startsWith('PENDING_CANCEL')
-          ? `Từ chối hủy: ${booking.cancellationReason.replace('PENDING_CANCEL:', '').trim()}`
-          : null,
-      },
-    });
-    return { ok: true };
-  }
-
   async mine(user: AuthenticatedUser) {
     const bookings = await this.prisma.booking.findMany({
       where: { customerId: this.parseId(user.id, 'Ma nguoi dung khong hop le') },
@@ -927,28 +1018,46 @@ export class CompatService {
   async notifications(user: AuthenticatedUser) {
     const rows = await this.legacyRows('notifications');
     const visibleRows = rows.filter((row) => String(row.user_id ?? '') === user.id);
+    const syntheticRows = await this.syntheticNotifications(user);
     return {
-      notifications: visibleRows.map((row) => ({
-        id: row.id,
-        type: row.type,
-        channel: row.channel,
-        title: row.title,
-        body: row.body,
-        data: row.data,
-        entityType: row.entity_type,
-        entityId: row.entity_id,
-        isRead: Boolean(Number(row.is_read ?? 0)),
-        readAt: row.read_at,
-        createdAt: row.created_at,
-      })),
+      notifications: [
+        ...syntheticRows,
+        ...visibleRows.map((row) => ({
+          id: row.id,
+          type: row.type,
+          channel: row.channel,
+          title: row.title,
+          body: row.body,
+          data: row.data,
+          entityType: row.entity_type,
+          entityId: row.entity_id,
+          isRead: Boolean(Number(row.is_read ?? 0)),
+          readAt: row.read_at,
+          createdAt: row.created_at,
+        })),
+      ],
     };
   }
 
   async unreadCount(user: AuthenticatedUser) {
     const rows = await this.legacyRows('notifications');
+    const syntheticRows = await this.syntheticNotifications(user);
     return {
-      count: rows.filter((row) => String(row.user_id ?? '') === user.id && !Number(row.is_read ?? 0)).length,
+      count: rows.filter((row) => String(row.user_id ?? '') === user.id && !Number(row.is_read ?? 0)).length
+        + syntheticRows.filter((row) => !row.isRead).length,
     };
+  }
+
+  async markNotificationRead() {
+    return { ok: true };
+  }
+
+  async markAllNotificationsRead() {
+    return { ok: true };
+  }
+
+  async deleteNotification() {
+    return { ok: true };
   }
 
   placesSearch(q: string) {
@@ -957,6 +1066,68 @@ export class CompatService {
 
   placesNearby(query: Record<string, string>) {
     return { places: [], query };
+  }
+
+  private isSuperAdminEmail(email: string): boolean {
+    const normalized = email.trim().toLowerCase();
+    const emails = (this.configService.get<string>('SUPER_ADMIN_EMAILS') ?? 'nguyenducmanh.ovaltine@gmail.com')
+      .split(',')
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    return emails.includes(normalized);
+  }
+
+  private async syntheticNotifications(user: AuthenticatedUser) {
+    if (user.userType !== user_type_enum.admin) return [];
+    const [pendingPartners, pendingProperties] = await Promise.all([
+      this.prisma.partnerProfile.findMany({
+        where: {
+          kycStatus: kyc_status_enum.pending,
+          user: {
+            deletedAt: null,
+            status: { not: user_status_enum.deleted },
+          },
+        },
+        include: { user: true },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+      this.prisma.property.findMany({
+        where: { status: property_status_enum.pending_review, deletedAt: null },
+        include: { partner: { include: { user: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ]);
+
+    return [
+      ...pendingPartners.map((partner) => ({
+        id: 7_000_000 + Number(partner.id),
+        type: 'new_partner_registration',
+        channel: 'system',
+        title: `Đối tác chờ duyệt: ${partner.businessName}`,
+        body: `${partner.user.fullName} (${partner.user.email}) đang chờ xét duyệt hồ sơ.`,
+        data: null,
+        entityType: 'partner',
+        entityId: Number(partner.userId),
+        isRead: false,
+        readAt: null,
+        createdAt: partner.createdAt,
+      })),
+      ...pendingProperties.map((property) => ({
+        id: 8_000_000 + Number(property.id),
+        type: 'property_review',
+        channel: 'system',
+        title: `Khách sạn chờ duyệt: ${property.name}`,
+        body: `${property.partner.businessName} (${property.partner.user.email}) đã gửi khách sạn cần duyệt.`,
+        data: null,
+        entityType: 'property',
+        entityId: Number(property.id),
+        isRead: false,
+        readAt: null,
+        createdAt: property.createdAt,
+      })),
+    ];
   }
 
   private async legacyRows(sourceTable: string): Promise<AnyBody[]> {
@@ -1141,39 +1312,6 @@ export class CompatService {
       });
       uploadedById = prop?.partner?.userId ?? 1n;
     }
-
-    // Save to the modern JSON columns of the Property table
-    const parsedNearbyPlaces = nearbyPlaces.map((place) => ({
-      name: this.text(place.name, ''),
-      type: this.text(place.type ?? place.category, ''),
-      distanceM: this.optionalNumber(place.distanceM ?? place.distance_m) ?? 0,
-      lat: this.optionalNumber(place.lat ?? place.latitude) ?? 0,
-      lon: this.optionalNumber(place.lon ?? place.longitude) ?? 0,
-    })).filter((p) => p.name);
-
-    const parsedTransportConnections = transport.map((t) => {
-      if (typeof t === 'string') {
-        const [name = '', distance = '', note = ''] = t.split(':');
-        return {
-          name: name.trim(),
-          distance: distance.trim(),
-          note: note.trim() || null,
-        };
-      }
-      return {
-        name: this.text(t.name, ''),
-        distance: this.text(t.distance, ''),
-        note: typeof t.note === 'string' ? t.note : null,
-      };
-    }).filter((t) => t.name);
-
-    await tx.property.update({
-      where: { id: propertyId },
-      data: {
-        nearbyPlaces: parsedNearbyPlaces,
-        transportConnections: parsedTransportConnections,
-      },
-    });
 
     // 1. Save property legacy row
     const propertyPayload = {
@@ -1490,10 +1628,10 @@ export class CompatService {
         if (!name) return null;
         return {
           name,
-          type: this.text(row.category ?? row.type, ''),
-          distanceM: Number(row.distance_m ?? row.distanceM ?? 0),
-          lat: Number(row.latitude ?? row.lat ?? 0),
-          lon: Number(row.longitude ?? row.lon ?? 0),
+          type: this.text(row.category, ''),
+          distanceM: Number(row.distance_m ?? 0),
+          lat: Number(row.latitude ?? 0),
+          lon: Number(row.longitude ?? 0),
         };
       })
       .filter((item): item is { name: string; type: string; distanceM: number; lat: number; lon: number } => Boolean(item));
@@ -1515,10 +1653,8 @@ export class CompatService {
     const checkOut = this.toDateKey(booking.checkOutDate);
     const today = this.todayDateKey();
     const isCancelled = booking.status === 'cancelled';
-    const isPendingCancel = booking.cancellationReason && booking.cancellationReason.startsWith('PENDING_CANCEL');
     const isCompleted =
       !isCancelled &&
-      !isPendingCancel &&
       (booking.status === 'checked_out' || checkOut <= today);
     const isCurrentStay =
       !isCancelled &&
@@ -1555,7 +1691,6 @@ export class CompatService {
       partnerPayout: Number(booking.partnerPayoutAmount),
       createdAt: booking.createdAt,
       specialRequests: booking.specialRequests ?? '',
-      cancellationReason: booking.cancellationReason ?? '',
       isCompleted,
       isCurrentStay,
       isFutureStay,
@@ -1646,6 +1781,33 @@ export class CompatService {
     });
     if (!partner) throw new ForbiddenException('Khong tim thay profile doi tac');
     return partner;
+  }
+
+  private describeDevice(userAgent?: string | null) {
+    if (!userAgent) return 'Trinh duyet web';
+    if (/mobile|android|iphone|ipad/i.test(userAgent)) return 'Thiet bi di dong';
+    if (/chrome/i.test(userAgent)) return 'Chrome';
+    if (/firefox/i.test(userAgent)) return 'Firefox';
+    if (/safari/i.test(userAgent)) return 'Safari';
+    return 'Trinh duyet web';
+  }
+
+  private accountPermissions(isAdmin: boolean, isPartner: boolean) {
+    if (isAdmin) {
+      return [
+        { name: 'Quản trị hệ thống', description: 'Xem dashboard, khách hàng, đặt phòng và thông báo toàn hệ thống', enabled: true },
+        { name: 'Duyệt đối tác', description: 'Phê duyệt, từ chối và cập nhật hồ sơ đối tác', enabled: true },
+        { name: 'Quản lý admin', description: 'Tạo và cập nhật tài khoản quản trị viên', enabled: true },
+      ];
+    }
+    if (isPartner) {
+      return [
+        { name: 'Quản lý khách sạn', description: 'Tạo và cập nhật hồ sơ khách sạn thuộc tài khoản', enabled: true },
+        { name: 'Quản lý đặt phòng', description: 'Theo dõi doanh thu, xác nhận và xử lý đặt phòng', enabled: true },
+        { name: 'Quản lý nhân viên', description: 'Tính năng phân quyền nhân viên sẽ mở sau khi có sub-user', enabled: false },
+      ];
+    }
+    return [];
   }
 
   private async ensurePartnerOwnsProperty(partnerId: bigint, propertyId: bigint) {

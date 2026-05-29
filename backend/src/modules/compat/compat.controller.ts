@@ -64,6 +64,43 @@ export class CompatController {
     } as never);
   }
 
+  @Get('account')
+  accountOverview(@CurrentUser() user: AuthenticatedUser) {
+    return this.compatService.accountOverview(user);
+  }
+
+  @Patch('account/profile')
+  updateAccountProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.compatService.updateAccountProfile(user, body);
+  }
+
+  @Get('account/avatar-upload-url')
+  avatarUploadUrl(@CurrentUser() user: AuthenticatedUser) {
+    return this.compatService.getAvatarUploadUrl(user);
+  }
+
+  /**
+   * Dành cho user đã login (qua Google) muốn nộp đơn làm đối tác.
+   * Không tạo user mới — chỉ nâng cấp user hiện tại lên partner.
+   */
+  @Post('partner/apply')
+  async applyPartner(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: Record<string, unknown>,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    await this.authService.applyAsPartner(user.id, {
+      businessName: (body.hotelName ?? body.businessName ?? body.fullName ?? '') as string,
+      phone: body.phone as string | undefined,
+    });
+    // Đăng xuất user khỏi phiên làm việc hiện tại và yêu cầu chờ phê duyệt
+    this.clearSessionCookies(response);
+    return { success: true, pending: true };
+  }
+
   @Public()
   @Get('public/rooms')
   searchRooms(@Query() query: Record<string, string>) {
@@ -184,6 +221,12 @@ export class CompatController {
   }
 
   @Roles(Role.ADMIN)
+  @Post('admin/admins/google')
+  createGoogleAdmin(@Body() body: Record<string, unknown>) {
+    return this.compatService.createGoogleAdmin(body);
+  }
+
+  @Roles(Role.ADMIN)
   @Patch('admin/admins/:id')
   updateAdmin(@Param('id') id: string, @Body() body: Record<string, unknown>) {
     return this.compatService.updateAdmin(id, body);
@@ -279,24 +322,6 @@ export class CompatController {
     return this.compatService.bookingReport();
   }
 
-  @Roles(Role.ADMIN)
-  @Post('admin/bookings/:id/cancel')
-  adminCancelBooking(@Param('id') id: string) {
-    return this.compatService.adminCancelBooking(id);
-  }
-
-  @Roles(Role.ADMIN)
-  @Post('admin/bookings/:id/mark-paid')
-  adminMarkBookingPaid(@Param('id') id: string) {
-    return this.compatService.adminMarkBookingPaid(id);
-  }
-
-  @Roles(Role.ADMIN)
-  @Post('admin/bookings/:id/reject-cancel')
-  adminRejectBookingCancel(@Param('id') id: string) {
-    return this.compatService.adminRejectBookingCancel(id);
-  }
-
   @Roles(Role.PARTNER)
   @Get('partner/booking-report')
   partnerBookingReport(@CurrentUser() user: AuthenticatedUser) {
@@ -352,17 +377,17 @@ export class CompatController {
 
   @Post('notifications/:id/read')
   markRead() {
-    return { ok: true };
+    return this.compatService.markNotificationRead();
   }
 
   @Post('notifications/read-all')
   markAllRead() {
-    return { ok: true };
+    return this.compatService.markAllNotificationsRead();
   }
 
   @Delete('notifications/:id')
   deleteNotification() {
-    return { ok: true };
+    return this.compatService.deleteNotification();
   }
 
   @Public()
@@ -389,5 +414,11 @@ export class CompatController {
     };
     response.cookie('session', token, options);
     response.cookie(`session_${userType}`, token, options);
+  }
+
+  private clearSessionCookies(response: Response): void {
+    for (const name of ['session', 'session_customer', 'session_partner', 'session_admin']) {
+      response.clearCookie(name, { path: '/' });
+    }
   }
 }

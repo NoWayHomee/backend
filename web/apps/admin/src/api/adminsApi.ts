@@ -8,6 +8,10 @@ export const createAdmin = async (data: any) => {
   return await api("/admin/admins", { method: "POST", body: JSON.stringify(data) });
 };
 
+export const createGoogleAdmin = async (data: any) => {
+  return await api("/admin/admins/google", { method: "POST", body: JSON.stringify(data) });
+};
+
 export const deleteAdmin = async (id: number) => {
   return await api(`/admin/admins/${id}`, { method: "DELETE" });
 };

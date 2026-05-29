@@ -179,6 +179,11 @@ export function BookingsTab() {
       const nextHotels = result.hotels || [];
       cachedBookingHotels = nextHotels;
       setHotels(nextHotels);
+      setDetail((current) =>
+        current
+          ? nextHotels.find((hotel: HotelReport) => hotel.propertyId === current.propertyId) || current
+          : current
+      );
     } catch (error: any) {
       setErr(error.message);
     } finally {
@@ -188,10 +193,6 @@ export function BookingsTab() {
 
   useEffect(() => {
     load().catch(() => {});
-    const interval = setInterval(() => {
-      load().catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const filtered = useMemo(() => {
@@ -276,19 +277,9 @@ export function BookingsTab() {
 
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">Đặt phòng & doanh thu</h2>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">Theo dõi lưu trú, đơn đặt phòng và khoản tiền đối tác nhận được.</p>
-        </div>
-        <button
-          onClick={() => load()}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition-colors shadow-sm text-slate-700 disabled:opacity-50"
-        >
-          <svg className={`size-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" /></svg>
-          Đồng bộ
-        </button>
+      <div>
+        <h2 className="text-lg font-bold tracking-tight text-slate-950">Đặt phòng & doanh thu</h2>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">Theo dõi lưu trú, đơn đặt phòng và khoản tiền đối tác nhận được.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">

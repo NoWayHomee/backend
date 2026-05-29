@@ -403,10 +403,6 @@ export function RoomEditorForm({
       }))
       .filter((item) => item.category && item.url),
   ];
-  const normalizedImages = serializedImages.map((img) => {
-    const normalizedCategory = img.category.replace(/^hotel_/, "");
-    return { ...img, category: normalizedCategory };
-  });
   const hasRequiredImages = REQUIRED_IMAGE_SLOTS.every((slot) => requiredImages[slot.key]?.url.trim());
   const hasPolicyBasics = !!policy.checkInTime
     && !!policy.checkOutTime
@@ -448,7 +444,7 @@ export function RoomEditorForm({
         highlights,
         transportConnections: validTransportConnections,
         nearbyPlaces: selectedNearbyList,
-        images: normalizedImages.map((item) => ({
+        images: serializedImages.map((item) => ({
           category: item.category,
           url: item.url,
           caption: item.caption || null,

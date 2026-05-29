@@ -56,6 +56,14 @@ function IconBell() {
   );
 }
 
+function IconAccount() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8 4v2m0 0v2m0-2h2m-2 0h-2M4 21a6 6 0 0 1 12 0" />
+    </svg>
+  );
+}
+
 function IconLogout() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,6 +104,7 @@ export function PartnerLayout({ user, onLogout }: { user: User; onLogout: () => 
     { label: "Đặt phòng", description: "Doanh thu & lưu trú", path: "/bookings", icon: <IconBookings /> },
     { label: "Thêm khách sạn", description: "Tạo hồ sơ mới", path: "/create", icon: <IconPlus /> },
     { label: "Thông báo", description: "Phản hồi từ admin", path: "/notifications", count: unreadCount, icon: <IconBell /> },
+    { label: "Tài khoản", description: "Hồ sơ & bảo mật", path: "/account", icon: <IconAccount /> },
   ];
 
   return (

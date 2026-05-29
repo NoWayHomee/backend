@@ -1,16 +1,19 @@
 import { useEffect, useReducer } from "react";
-import { fetchAdmins, createAdmin, deleteAdmin, updateAdmin } from "../../../../api/adminsApi";
+import { fetchAdmins, createAdmin, createGoogleAdmin, deleteAdmin, updateAdmin } from "../../../../api/adminsApi";
 import { Card, CardHeader, CardTitle, CardContent, Button, cn } from "../../../../shared/components/ui";
-import { UserPlus, Edit2, Trash2, ShieldCheck, Mail, User } from "lucide-react";
+import { UserPlus, Edit2, Trash2, ShieldCheck, Mail, User, KeyRound } from "lucide-react";
 
-type Admin = { id: number; email: string; fullName: string; createdAt: string };
+type Admin = { id: number; email: string; fullName: string; createdAt: string; isSuperAdmin?: boolean; loginMethods?: string[] };
 
 type State = {
   list: Admin[];
   form: { email: string; password: string; fullName: string };
+  googleForm: { email: string; fullName: string };
   error: string;
+  googleError: string;
   message: string;
   isLoading: boolean;
+  isSavingGoogle: boolean;
   editing: (Admin & { password?: string }) | null;
   editError: string;
   isSavingEdit: boolean;
@@ -19,9 +22,12 @@ type State = {
 type Action =
   | { type: "SET_LIST"; payload: Admin[] }
   | { type: "SET_FORM"; payload: Partial<State["form"]> }
+  | { type: "SET_GOOGLE_FORM"; payload: Partial<State["googleForm"]> }
   | { type: "SET_ERROR"; payload: string }
+  | { type: "SET_GOOGLE_ERROR"; payload: string }
   | { type: "SET_MESSAGE"; payload: string }
   | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_SAVING_GOOGLE"; payload: boolean }
   | { type: "START_EDIT"; payload: Admin }
   | { type: "SET_EDIT_FORM"; payload: Partial<Admin & { password?: string }> }
   | { type: "CANCEL_EDIT" }
@@ -31,9 +37,12 @@ type Action =
 const initialState: State = {
   list: [],
   form: { email: "", password: "", fullName: "" },
+  googleForm: { email: "", fullName: "" },
   error: "",
+  googleError: "",
   message: "",
   isLoading: false,
+  isSavingGoogle: false,
   editing: null,
   editError: "",
   isSavingEdit: false,
@@ -43,9 +52,12 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "SET_LIST": return { ...state, list: action.payload };
     case "SET_FORM": return { ...state, form: { ...state.form, ...action.payload } };
+    case "SET_GOOGLE_FORM": return { ...state, googleForm: { ...state.googleForm, ...action.payload } };
     case "SET_ERROR": return { ...state, error: action.payload };
+    case "SET_GOOGLE_ERROR": return { ...state, googleError: action.payload };
     case "SET_MESSAGE": return { ...state, message: action.payload };
     case "SET_LOADING": return { ...state, isLoading: action.payload };
+    case "SET_SAVING_GOOGLE": return { ...state, isSavingGoogle: action.payload };
     case "START_EDIT": return { ...state, editing: { ...action.payload, password: "" }, editError: "" };
     case "SET_EDIT_FORM": return { ...state, editing: state.editing ? { ...state.editing, ...action.payload } : null };
     case "CANCEL_EDIT": return { ...state, editing: null, editError: "" };
@@ -55,7 +67,7 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function AdminsTab({ currentUserId }: { currentUserId: number }) {
+export function AdminsTab({ currentUserId, isSuperAdmin }: { currentUserId: number; isSuperAdmin: boolean }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const load = async () => {
@@ -83,6 +95,23 @@ export function AdminsTab({ currentUserId }: { currentUserId: number }) {
       dispatch({ type: "SET_ERROR", payload: err.message });
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
+    }
+  };
+
+  const handleGoogleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch({ type: "SET_GOOGLE_ERROR", payload: "" });
+    dispatch({ type: "SET_MESSAGE", payload: "" });
+    dispatch({ type: "SET_SAVING_GOOGLE", payload: true });
+    try {
+      await createGoogleAdmin(state.googleForm);
+      dispatch({ type: "SET_MESSAGE", payload: "Đã thêm email admin được phép đăng nhập bằng Google." });
+      dispatch({ type: "SET_GOOGLE_FORM", payload: { email: "", fullName: "" } });
+      await load();
+    } catch (err: any) {
+      dispatch({ type: "SET_GOOGLE_ERROR", payload: err.message });
+    } finally {
+      dispatch({ type: "SET_SAVING_GOOGLE", payload: false });
     }
   };
 
@@ -115,6 +144,7 @@ export function AdminsTab({ currentUserId }: { currentUserId: number }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[400px_1fr] animate-in fade-in duration-500">
+      <div className="space-y-4">
       <Card className="h-fit border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
         <CardHeader className="bg-zinc-50/50 border-b border-zinc-100">
           <div className="flex items-center gap-2.5">
@@ -164,6 +194,48 @@ export function AdminsTab({ currentUserId }: { currentUserId: number }) {
         </CardContent>
       </Card>
 
+      {isSuperAdmin && (
+        <Card className="h-fit border-indigo-100 shadow-sm rounded-2xl overflow-hidden">
+          <CardHeader className="bg-indigo-50/60 border-b border-indigo-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
+                <KeyRound size={18} />
+              </div>
+              <CardTitle className="text-base font-bold text-zinc-800">Email admin đăng nhập Google</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <form onSubmit={handleGoogleSubmit} className="space-y-4">
+              <FormInput
+                id="googleFullName"
+                label="Họ và tên"
+                icon={User}
+                value={state.googleForm.fullName}
+                onChange={(v: string) => dispatch({ type: "SET_GOOGLE_FORM", payload: { fullName: v } })}
+                placeholder="Nguyễn Văn A"
+                required
+              />
+              <FormInput
+                id="googleEmail"
+                label="Email Google admin"
+                icon={Mail}
+                type="email"
+                value={state.googleForm.email}
+                onChange={(v: string) => dispatch({ type: "SET_GOOGLE_FORM", payload: { email: v } })}
+                placeholder="admin@gmail.com"
+                required
+              />
+              {state.googleError && <p className="text-xs font-semibold text-red-500 bg-red-50 p-2.5 rounded-lg border border-red-100">{state.googleError}</p>}
+              <p className="text-xs leading-5 text-zinc-500">Email được thêm ở đây sẽ là tài khoản admin và có thể đăng nhập bằng nút Google.</p>
+              <Button type="submit" className="w-full h-10 font-bold rounded-xl" disabled={state.isSavingGoogle}>
+                {state.isSavingGoogle ? "Đang thêm..." : "Thêm email Google"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+      </div>
+
       <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
         <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-4 px-6">
           <div className="flex justify-between items-center">
@@ -194,6 +266,10 @@ export function AdminsTab({ currentUserId }: { currentUserId: number }) {
                         <span className="font-semibold text-zinc-800">
                           {admin.fullName}
                           {admin.id === currentUserId && <span className="ml-2 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md uppercase">Bạn</span>}
+                          {admin.isSuperAdmin && <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md uppercase">Admin tổng</span>}
+                        </span>
+                        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                          {admin.loginMethods?.includes("password") ? "Mật khẩu + Google" : "Google"}
                         </span>
                       </div>
                     </div>
